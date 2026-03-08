@@ -9,6 +9,9 @@ const { testConnection } = require('./config/database');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust Render/Heroku reverse proxy so express-rate-limit reads X-Forwarded-For correctly
+app.set('trust proxy', 1);
+
 // =============================================
 // SECURITY MIDDLEWARE
 // =============================================
