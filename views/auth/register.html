@@ -51,6 +51,43 @@
     .field-error-msg { color: var(--error); font-size: .76rem; margin-top: .3rem; display:flex; align-items:center; gap:.3rem; }
     .field-error-msg::before { content:''; display:inline-block; width:4px; height:4px; border-radius:50%; background:var(--error); flex-shrink:0; }
     .member-row.is-invalid { border-color: var(--error) !important; background: rgba(248,81,73,.06) !important; }
+
+    /* City searchable dropdown */
+    .city-select-wrap { position: relative; }
+    .city-dropdown {
+      position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+      background: var(--bg-card); border: 1px solid var(--primary);
+      border-radius: var(--radius-sm); max-height: 220px; overflow-y: auto;
+      z-index: 999; display: none; box-shadow: 0 8px 24px rgba(0,0,0,.45);
+    }
+    .city-dropdown.open { display: block; }
+    .city-dropdown-header {
+      font-size: .68rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .08em; color: var(--text-muted);
+      padding: .4rem .75rem .2rem; background: var(--bg);
+      position: sticky; top: 0; pointer-events: none;
+    }
+    .city-dropdown-item {
+      padding: .42rem .75rem; font-size: .875rem; cursor: pointer;
+      color: var(--text); transition: background .1s;
+    }
+    .city-dropdown-item:hover, .city-dropdown-item.focused {
+      background: rgba(37,99,235,.2); color: var(--primary);
+    }
+    .city-dropdown-item.selected {
+      background: rgba(37,99,235,.12); color: var(--primary); font-weight: 600;
+    }
+    .city-dropdown-empty {
+      padding: .75rem; font-size: .875rem; color: var(--text-muted);
+      text-align: center; font-style: italic;
+    }
+    .city-clear-btn {
+      position: absolute; right: .75rem; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: var(--text-muted); cursor: pointer;
+      display: none; padding: 0; font-size: .75rem; z-index: 2;
+      width: 16px; height: 16px; align-items: center; justify-content: center;
+    }
+    .city-clear-btn.visible { display: flex; }
   </style>
 </head>
 <body>
@@ -146,7 +183,13 @@
         </div>
         <div class="form-group">
           <label class="form-label" for="city">Місто</label>
-          <input class="form-control" type="text" id="city" name="city" placeholder="Київ" autocomplete="address-level2">
+          <div class="city-select-wrap">
+            <input class="form-control" type="text" id="city" name="city"
+                   placeholder="Почніть вводити або оберіть зі списку..."
+                   autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false">
+            <button type="button" class="city-clear-btn" id="cityClrBtn" aria-label="Очистити місто" tabindex="-1">✕</button>
+            <div class="city-dropdown" id="cityDropdown" role="listbox" aria-label="Список міст України"></div>
+          </div>
         </div>
       </div>
 
@@ -509,6 +552,144 @@ document.getElementById('registerForm').addEventListener('submit', async functio
     loader.classList.add('hidden');
   }
 });
+
+/* ── Ukrainian city picker ── */
+(function() {
+  var UA_CITIES = [
+    { ob: 'м. Київ',                 ci: ['Київ'] },
+    { ob: 'Вінницька обл.',          ci: ['Вінниця','Жмеринка','Козятин','Могилів-Подільський','Хмільник'] },
+    { ob: 'Волинська обл.',          ci: ['Луцьк','Ковель','Нововолинськ','Рожище'] },
+    { ob: 'Дніпропетровська обл.',   ci: ['Дніпро','Кривий Ріг','Кам\'янське','Нікополь','Павлоград','Жовті Води'] },
+    { ob: 'Донецька обл.',           ci: ['Краматорськ','Маріуполь','Слов\'янськ','Бахмут','Покровськ'] },
+    { ob: 'Житомирська обл.',        ci: ['Житомир','Бердичів','Коростень','Новоград-Волинський'] },
+    { ob: 'Закарпатська обл.',       ci: ['Ужгород','Мукачево','Берегово','Хуст'] },
+    { ob: 'Запорізька обл.',         ci: ['Запоріжжя','Бердянськ','Енергодар','Мелітополь'] },
+    { ob: 'Івано-Франківська обл.',  ci: ['Івано-Франківськ','Калуш','Коломия','Стрий'] },
+    { ob: 'Київська обл.',           ci: ['Біла Церква','Бориспіль','Бровари','Буча','Васильків','Ірпінь','Фастів'] },
+    { ob: 'Кіровоградська обл.',     ci: ['Кропивницький','Олександрія','Знам\'янка'] },
+    { ob: 'Львівська обл.',          ci: ['Львів','Борислав','Дрогобич','Стрий','Трускавець','Червоноград'] },
+    { ob: 'Миколаївська обл.',       ci: ['Миколаїв','Вознесенськ','Очаків','Первомайськ'] },
+    { ob: 'Одеська обл.',            ci: ['Одеса','Білгород-Дністровський','Ізмаїл','Чорноморськ','Южне'] },
+    { ob: 'Полтавська обл.',         ci: ['Полтава','Кременчук','Лубни','Миргород'] },
+    { ob: 'Рівненська обл.',         ci: ['Рівне','Дубно','Здолбунів','Острог'] },
+    { ob: 'Сумська обл.',            ci: ['Суми','Конотоп','Охтирка','Ромни','Шостка'] },
+    { ob: 'Тернопільська обл.',      ci: ['Тернопіль','Кременець','Чортків'] },
+    { ob: 'Харківська обл.',         ci: ['Харків','Ізюм','Куп\'янськ','Лозова','Чугуїв'] },
+    { ob: 'Херсонська обл.',         ci: ['Херсон','Каховка','Нова Каховка'] },
+    { ob: 'Хмельницька обл.',        ci: ['Хмельницький','Кам\'янець-Подільський','Шепетівка'] },
+    { ob: 'Черкаська обл.',          ci: ['Черкаси','Золотоноша','Сміла','Умань'] },
+    { ob: 'Чернівецька обл.',        ci: ['Чернівці','Новодністровськ'] },
+    { ob: 'Чернігівська обл.',       ci: ['Чернігів','Бахмач','Ніжин','Прилуки'] }
+  ];
+
+  var cityInput    = document.getElementById('city');
+  var dropdown     = document.getElementById('cityDropdown');
+  var clearBtn     = document.getElementById('cityClrBtn');
+  var focusedIdx   = -1;
+  var selectedCity = '';
+
+  function buildList(q) {
+    var ql = q.toLowerCase().trim();
+    var out = [];
+    UA_CITIES.forEach(function(g) {
+      var hits = ql ? g.ci.filter(function(c) { return c.toLowerCase().includes(ql); }) : g.ci;
+      if (hits.length) {
+        out.push({ hdr: g.ob });
+        hits.forEach(function(c) { out.push({ city: c }); });
+      }
+    });
+    return out;
+  }
+
+  function renderList(q) {
+    var items = buildList(q);
+    dropdown.innerHTML = '';
+    focusedIdx = -1;
+    if (!items.length) {
+      var em = document.createElement('div');
+      em.className = 'city-dropdown-empty';
+      em.textContent = 'Нічого не знайдено';
+      dropdown.appendChild(em);
+      return;
+    }
+    items.forEach(function(item) {
+      var el = document.createElement('div');
+      if (item.hdr) {
+        el.className = 'city-dropdown-header';
+        el.textContent = item.hdr;
+      } else {
+        el.className = 'city-dropdown-item' + (item.city === selectedCity ? ' selected' : '');
+        el.textContent = item.city;
+        el.addEventListener('mousedown', function(ev) {
+          ev.preventDefault();
+          pick(item.city);
+        });
+      }
+      dropdown.appendChild(el);
+    });
+  }
+
+  function openDrop() {
+    renderList(cityInput.value);
+    dropdown.classList.add('open');
+    cityInput.setAttribute('aria-expanded', 'true');
+    var sel = dropdown.querySelector('.selected');
+    if (sel) sel.scrollIntoView({ block: 'nearest' });
+  }
+
+  function closeDrop() {
+    dropdown.classList.remove('open');
+    cityInput.setAttribute('aria-expanded', 'false');
+    focusedIdx = -1;
+  }
+
+  function pick(name) {
+    selectedCity = name;
+    cityInput.value = name;
+    clearBtn.classList.add('visible');
+    closeDrop();
+  }
+
+  function getItems() { return Array.from(dropdown.querySelectorAll('.city-dropdown-item')); }
+
+  cityInput.addEventListener('focus', openDrop);
+  cityInput.addEventListener('blur', function() { setTimeout(closeDrop, 160); });
+
+  cityInput.addEventListener('input', function() {
+    selectedCity = '';
+    clearBtn.classList.toggle('visible', !!this.value);
+    renderList(this.value);
+    dropdown.classList.add('open');
+  });
+
+  cityInput.addEventListener('keydown', function(e) {
+    var vis = getItems();
+    if (!dropdown.classList.contains('open')) {
+      if (e.key === 'ArrowDown' || e.key === 'Enter') { openDrop(); return; }
+    }
+    if (e.key === 'Escape') { closeDrop(); return; }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      focusedIdx = Math.min(focusedIdx + 1, vis.length - 1);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      focusedIdx = Math.max(focusedIdx - 1, 0);
+    } else if (e.key === 'Enter' && focusedIdx >= 0) {
+      e.preventDefault();
+      pick(vis[focusedIdx].textContent);
+      return;
+    } else { return; }
+    vis.forEach(function(el, i) { el.classList.toggle('focused', i === focusedIdx); });
+    if (vis[focusedIdx]) vis[focusedIdx].scrollIntoView({ block: 'nearest' });
+  });
+
+  clearBtn.addEventListener('click', function() {
+    selectedCity = '';
+    cityInput.value = '';
+    this.classList.remove('visible');
+    cityInput.focus();
+  });
+})();
 </script>
 </body>
 </html>
