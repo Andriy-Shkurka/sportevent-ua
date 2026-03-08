@@ -494,7 +494,7 @@ async function getReports(req, res) {
                 COUNT(*)                             as count
          FROM registrations
          WHERE registered_at >= NOW() - INTERVAL '${monthsBack} months'
-         GROUP BY TO_CHAR(registered_at, 'YYYY-MM')
+         GROUP BY TO_CHAR(registered_at, 'YYYY-MM'), TO_CHAR(registered_at, 'MM/YYYY')
          ORDER BY 1 ASC`
       : `SELECT DATE_FORMAT(registered_at, '%Y-%m')  as month,
                 DATE_FORMAT(registered_at, '%m/%Y')  as month_label,
