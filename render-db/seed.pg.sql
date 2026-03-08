@@ -237,10 +237,43 @@ BEGIN
 END $$;
 
 -- =============================================
+-- GALLERY MEDIA (24 photos already in git: public/images/gallery/)
+-- uploaded_by = 1 (admin)
+-- =============================================
+DELETE FROM media WHERE file_path LIKE '/images/gallery/%';
+
+INSERT INTO media (uploaded_by, file_name, file_path, file_type, mime_type, title, is_public) VALUES
+  (1, 'athletics-sprint.jpg',    '/images/gallery/athletics-sprint.jpg',    'image', 'image/jpeg', 'Легка атлетика — спринт',        TRUE),
+  (1, 'awards-ceremony.jpg',     '/images/gallery/awards-ceremony.jpg',     'image', 'image/jpeg', 'Церемонія нагородження',         TRUE),
+  (1, 'basketball-3x3.jpg',      '/images/gallery/basketball-3x3.jpg',      'image', 'image/jpeg', 'Баскетбол 3×3',                  TRUE),
+  (1, 'basketball-shot.jpg',     '/images/gallery/basketball-shot.jpg',     'image', 'image/jpeg', 'Кидок у баскетболі',             TRUE),
+  (1, 'boxing-final.jpg',        '/images/gallery/boxing-final.jpg',        'image', 'image/jpeg', 'Боксинг — фінал',                TRUE),
+  (1, 'carpathian-marathon.jpg', '/images/gallery/carpathian-marathon.jpg', 'image', 'image/jpeg', 'Карпатський марафон',            TRUE),
+  (1, 'cycling-peloton.jpg',     '/images/gallery/cycling-peloton.jpg',     'image', 'image/jpeg', 'Велогонка — пелотон',            TRUE),
+  (1, 'cycling-race.jpg',        '/images/gallery/cycling-race.jpg',        'image', 'image/jpeg', 'Велогонка',                      TRUE),
+  (1, 'football-match.jpg',      '/images/gallery/football-match.jpg',      'image', 'image/jpeg', 'Футбольний матч',                TRUE),
+  (1, 'football-shot.jpg',       '/images/gallery/football-shot.jpg',       'image', 'image/jpeg', 'Удар у футболі',                 TRUE),
+  (1, 'gymnastics.jpg',          '/images/gallery/gymnastics.jpg',          'image', 'image/jpeg', 'Гімнастика',                     TRUE),
+  (1, 'marathon-run.jpg',        '/images/gallery/marathon-run.jpg',        'image', 'image/jpeg', 'Марафон',                        TRUE),
+  (1, 'sports-arena.jpg',        '/images/gallery/sports-arena.jpg',        'image', 'image/jpeg', 'Спортивна арена',                TRUE),
+  (1, 'swimming-award.jpg',      '/images/gallery/swimming-award.jpg',      'image', 'image/jpeg', 'Плавання — нагорода',            TRUE),
+  (1, 'swimming-freestyle.jpg',  '/images/gallery/swimming-freestyle.jpg',  'image', 'image/jpeg', 'Плавання вільним стилем',        TRUE),
+  (1, 'swimming-start.jpg',      '/images/gallery/swimming-start.jpg',      'image', 'image/jpeg', 'Старт у плаванні',               TRUE),
+  (1, 'team-celebration.jpg',    '/images/gallery/team-celebration.jpg',    'image', 'image/jpeg', 'Святкування команди',            TRUE),
+  (1, 'tennis-court.jpg',        '/images/gallery/tennis-court.jpg',        'image', 'image/jpeg', 'Тенісний корт',                  TRUE),
+  (1, 'tennis-match.jpg',        '/images/gallery/tennis-match.jpg',        'image', 'image/jpeg', 'Тенісний матч',                  TRUE),
+  (1, 'track-finish.jpg',        '/images/gallery/track-finish.jpg',        'image', 'image/jpeg', 'Фінішна пряма',                  TRUE),
+  (1, 'volleyball-block.jpg',    '/images/gallery/volleyball-block.jpg',    'image', 'image/jpeg', 'Блок у волейболі',               TRUE),
+  (1, 'volleyball-serve.jpg',    '/images/gallery/volleyball-serve.jpg',    'image', 'image/jpeg', 'Подача у волейболі',             TRUE),
+  (1, 'warmup.jpg',              '/images/gallery/warmup.jpg',              'image', 'image/jpeg', 'Розминка',                       TRUE),
+  (1, 'wrestling.jpg',           '/images/gallery/wrestling.jpg',           'image', 'image/jpeg', 'Боротьба',                       TRUE);
+
+-- =============================================
 -- Підсумкова статистика
 -- =============================================
 SELECT 'events'        as "table", count(*) as "rows" FROM events
 UNION ALL SELECT 'news',          count(*) FROM news
 UNION ALL SELECT 'users',         count(*) FROM users
 UNION ALL SELECT 'registrations', count(*) FROM registrations
-UNION ALL SELECT 'results',       count(*) FROM results;
+UNION ALL SELECT 'results',       count(*) FROM results
+UNION ALL SELECT 'media',         count(*) FROM media;
