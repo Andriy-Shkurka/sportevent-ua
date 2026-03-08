@@ -530,8 +530,9 @@ async function getReports(req, res) {
       period
     });
   } catch (err) {
-    console.error('Reports error:', err);
-    res.status(500).json({ error: 'Помилка формування звіту' });
+    console.error('Reports error message:', err.message);
+    console.error('Reports error stack:', err.stack);
+    res.status(500).json({ error: 'Помилка формування звіту', detail: err.message });
   }
 }
 
