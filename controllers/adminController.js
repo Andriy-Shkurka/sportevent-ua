@@ -443,19 +443,24 @@ async function getReports(req, res) {
       : (n) => `DATE_SUB(NOW(), INTERVAL ${n} MONTH)`;
     const dateFilter = months ? `>= ${dateSub(months)}` : 'IS NOT NULL';
 
-    const [[stats]] = await pool.execute(`
-      SELECT
-        (SELECT COUNT(*) FROM events ${months ? 'WHERE start_date ' + dateFilter : ''}) as total_events,
-        (SELECT COUNT(*) FROM events WHERE status IN ('upcoming','registration_open','ongoing')) as active_events,
-        (SELECT COUNT(*) FROM events WHERE status = 'completed') as finished_events,
-        (SELECT COUNT(*) FROM registrations WHERE status='approved' ${months ? 'AND registered_at ' + dateFilter : ''}) as total_participants,
-        (SELECT COUNT(*) FROM users) as total_users,
-        (SELECT COUNT(*) FROM users WHERE created_at ${dateFilter}) as new_users,
-        (SELECT COUNT(*) FROM users WHERE is_active = TRUE AND is_blocked = FALSE) as active_users,
-        (SELECT COUNT(*) FROM users WHERE is_blocked = TRUE) as blocked_users,
-        (SELECT COUNT(*) FROM media) as media_count,
-        (SELECT COUNT(*) FROM contact_messages) as contacts_count
-    `);
+    // Run stats subqueries individually to avoid PostgreSQL bare-SELECT issues
+    const statsQueries = [
+      { key: 'total_events',      sql: `SELECT COUNT(*) as v FROM events ${months ? 'WHERE start_date ' + dateFilter : ''}` },
+      { key: 'active_events',     sql: `SELECT COUNT(*) as v FROM events WHERE status IN ('upcoming','registration_open','ongoing')` },
+      { key: 'finished_events',   sql: `SELECT COUNT(*) as v FROM events WHERE status = 'completed'` },
+      { key: 'total_participants',sql: `SELECT COUNT(*) as v FROM registrations WHERE status='approved' ${months ? 'AND registered_at ' + dateFilter : ''}` },
+      { key: 'total_users',       sql: `SELECT COUNT(*) as v FROM users` },
+      { key: 'new_users',         sql: `SELECT COUNT(*) as v FROM users WHERE created_at ${dateFilter}` },
+      { key: 'active_users',      sql: `SELECT COUNT(*) as v FROM users WHERE is_active = TRUE AND is_blocked = FALSE` },
+      { key: 'blocked_users',     sql: `SELECT COUNT(*) as v FROM users WHERE is_blocked = TRUE` },
+      { key: 'media_count',       sql: `SELECT COUNT(*) as v FROM media` },
+      { key: 'contacts_count',    sql: `SELECT COUNT(*) as v FROM contact_messages` },
+    ];
+    const stats = {};
+    for (const q of statsQueries) {
+      const [[row]] = await pool.execute(q.sql);
+      stats[q.key] = row ? (row.v ?? row.count ?? 0) : 0;
+    }
 
     const [[regStats]] = await pool.execute(`
       SELECT COUNT(*) as total,
