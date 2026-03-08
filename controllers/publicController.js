@@ -107,7 +107,8 @@ async function getRankings(req, res) {
        JOIN events e ON res.event_id = e.id
        JOIN disciplines d ON e.discipline_id = d.id
        ${where}
-       GROUP BY u.id, d.id
+       GROUP BY u.id, u.first_name, u.last_name, u.city, u.avatar,
+                ro.name, d.id, d.name, d.slug
        ORDER BY total_points DESC
        LIMIT ?`,
       [...params, parseInt(limit)]

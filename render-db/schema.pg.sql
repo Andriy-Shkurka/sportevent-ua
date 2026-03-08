@@ -2,6 +2,7 @@
 -- СпортUA — PostgreSQL Schema (Render)
 -- Converted from MySQL schema
 -- =============================================
+\encoding UTF8
 
 -- ROLES
 CREATE TABLE IF NOT EXISTS roles (

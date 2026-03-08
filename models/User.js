@@ -82,7 +82,8 @@ class User {
        JOIN roles r ON u.role_id = r.id
        LEFT JOIN registrations reg ON reg.user_id = u.id
        ${where}
-       GROUP BY u.id
+       GROUP BY u.id, u.email, u.first_name, u.last_name, u.phone, u.city,
+                u.is_active, u.is_blocked, u.created_at, u.last_login, r.name
        ORDER BY u.created_at DESC LIMIT ? OFFSET ?`,
       [...params, limit, offset]
     );

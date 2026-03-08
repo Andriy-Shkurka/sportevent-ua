@@ -56,7 +56,7 @@ async function getDashboardStats(req, res) {
       LEFT JOIN locations l ON e.location_id = l.id
       LEFT JOIN registrations reg ON reg.event_id = e.id AND reg.status = 'approved'
       WHERE e.start_date >= NOW()
-      GROUP BY e.id
+      GROUP BY e.id, e.title, e.slug, e.start_date, e.status, d.name, l.city
       ORDER BY e.start_date ASC LIMIT 5
     `);
 
@@ -116,7 +116,7 @@ async function getUser(req, res) {
          JOIN users u ON r.user_id = u.id
          JOIN roles ro ON u.role_id = ro.id
          WHERE r.team_name = ? AND u.id != ? AND ro.name = 'athlete'
-         GROUP BY u.id
+         GROUP BY u.id, u.first_name, u.last_name, u.city, u.email
          ORDER BY u.first_name, u.last_name`,
         [user.first_name, req.params.id]
       );
@@ -239,8 +239,10 @@ async function createEvent(req, res) {
     const id = await Event.create(req.body);
     res.status(201).json({ message: 'Захід створено', id });
   } catch (err) {
-    console.error('Create event error:', err);
-    res.status(500).json({ error: 'Помилка створення заходу' });
+    console.error('Create event error:', err.message);
+    console.error('Create event stack:', err.stack);
+    console.error('Create event body:', JSON.stringify(req.body));
+    res.status(500).json({ error: 'Помилка створення заходу', detail: err.message });
   }
 }
 
@@ -435,9 +437,11 @@ async function getReports(req, res) {
     const { period = 'all' } = req.query;
     const intervalMap = { month: 1, quarter: 3, year: 12 };
     const months = intervalMap[period];
-    const dateFilter = months
-      ? `>= DATE_SUB(NOW(), INTERVAL ${months} MONTH)`
-      : 'IS NOT NULL';
+    // PostgreSQL uses NOW() - INTERVAL '…', MySQL uses DATE_SUB(NOW(), INTERVAL … MONTH)
+    const dateSub = pool.isPg
+      ? (n) => `NOW() - INTERVAL '${n} months'`
+      : (n) => `DATE_SUB(NOW(), INTERVAL ${n} MONTH)`;
+    const dateFilter = months ? `>= ${dateSub(months)}` : 'IS NOT NULL';
 
     const [[stats]] = await pool.execute(`
       SELECT
@@ -478,14 +482,22 @@ async function getReports(req, res) {
     `);
 
     const monthsBack = months || 120;
-    const [byMonth] = await pool.execute(`
-      SELECT DATE_FORMAT(registered_at, '%Y-%m') as month,
-             DATE_FORMAT(registered_at, '%m/%Y') as month_label,
-             COUNT(*) as count
-      FROM registrations
-      WHERE registered_at >= DATE_SUB(NOW(), INTERVAL ${monthsBack} MONTH)
-      GROUP BY month ORDER BY month ASC
-    `);
+    // DATE_FORMAT / GROUP BY alias → PostgreSQL needs TO_CHAR + expression in GROUP BY
+    const byMonthSql = pool.isPg
+      ? `SELECT TO_CHAR(registered_at, 'YYYY-MM')    as month,
+                TO_CHAR(registered_at, 'MM/YYYY')    as month_label,
+                COUNT(*)                             as count
+         FROM registrations
+         WHERE registered_at >= NOW() - INTERVAL '${monthsBack} months'
+         GROUP BY TO_CHAR(registered_at, 'YYYY-MM')
+         ORDER BY 1 ASC`
+      : `SELECT DATE_FORMAT(registered_at, '%Y-%m')  as month,
+                DATE_FORMAT(registered_at, '%m/%Y')  as month_label,
+                COUNT(*)                             as count
+         FROM registrations
+         WHERE registered_at >= DATE_SUB(NOW(), INTERVAL ${monthsBack} MONTH)
+         GROUP BY month ORDER BY month ASC`;
+    const [byMonth] = await pool.execute(byMonthSql);
 
     const [topUsers] = await pool.execute(`
       SELECT u.id, u.first_name, u.last_name, u.city,
@@ -494,17 +506,17 @@ async function getReports(req, res) {
       FROM users u
       LEFT JOIN results res ON res.user_id = u.id
       ${months ? 'LEFT JOIN events e ON res.event_id = e.id AND e.start_date ' + dateFilter : ''}
-      GROUP BY u.id
-      HAVING total_points > 0
+      GROUP BY u.id, u.first_name, u.last_name, u.city
+      HAVING COALESCE(SUM(res.points), 0) > 0
       ORDER BY total_points DESC LIMIT 10
     `);
 
     const [topEvents] = await pool.execute(`
-      SELECT e.title, COUNT(r.id) as reg_count
+      SELECT e.id, e.title, COUNT(r.id) as reg_count
       FROM events e
       LEFT JOIN registrations r ON r.event_id = e.id AND r.status = 'approved' ${months ? 'AND r.registered_at ' + dateFilter : ''}
       ${months ? 'WHERE e.start_date ' + dateFilter : ''}
-      GROUP BY e.id ORDER BY reg_count DESC LIMIT 8
+      GROUP BY e.id, e.title ORDER BY reg_count DESC LIMIT 8
     `);
 
     res.json({
