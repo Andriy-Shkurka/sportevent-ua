@@ -64,6 +64,48 @@ async function getDashboardStats(req, res) {
       "SELECT COUNT(*) as contacts_count FROM contact_messages WHERE status NOT IN ('replied','closed')"
     );
 
+    // Recent events (by created_at)
+    const [recentEvents] = await pool.execute(`
+      SELECT e.id, e.title, e.created_at
+      FROM events e ORDER BY e.created_at DESC LIMIT 5
+    `);
+
+    // Recent news (published)
+    const [recentNews] = await pool.execute(`
+      SELECT n.id, n.title, n.created_at
+      FROM news n WHERE n.status = 'published' ORDER BY n.created_at DESC LIMIT 5
+    `);
+
+    // Build unified activity feed
+    const roleLabels = { admin: 'адміністратор', athlete: 'спортсмен', team: 'команда', coach: 'тренер' };
+    const statusLabels = { pending: 'на розгляді', approved: 'підтверджено', rejected: 'відхилено' };
+
+    const recent_activity = [
+      ...recentRegistrations.slice(0, 6).map(r => ({
+        type: 'registration',
+        message: `Реєстрація ${r.first_name} ${r.last_name} на «${r.event_title}» — ${statusLabels[r.status] || r.status}`,
+        created_at: r.registered_at
+      })),
+      ...recentUsers.slice(0, 4).map(u => ({
+        type: 'user',
+        message: `Новий користувач: ${u.first_name} ${u.last_name} (${roleLabels[u.role_name] || u.role_name})`,
+        created_at: u.created_at
+      })),
+      ...recentEvents.slice(0, 4).map(e => ({
+        type: 'event',
+        message: `Додано захід: «${e.title}»`,
+        created_at: e.created_at
+      })),
+      ...recentNews.slice(0, 3).map(n => ({
+        type: 'news',
+        message: `Опубліковано новину: «${n.title}»`,
+        created_at: n.created_at
+      }))
+    ]
+      .filter(a => a.created_at)
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, 10);
+
     res.json({
       users: userStats,
       events: eventStats,
@@ -72,7 +114,8 @@ async function getDashboardStats(req, res) {
       contacts_count,
       recentRegistrations,
       recentUsers,
-      upcomingEvents
+      upcomingEvents,
+      recent_activity
     });
   } catch (err) {
     console.error('Dashboard stats error:', err);
