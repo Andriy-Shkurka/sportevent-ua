@@ -1,0 +1,408 @@
+﻿<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Результати | Адмін | СпортUA</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <a href="/" class="logo" style="font-size:1.1rem"><div class="logo-icon" style="width:28px;height:28px;font-size:.85rem">&#9889;</div>Спорт<span>UA</span></a>
+      <button id="sidebarClose" style="background:none;border:none;color:var(--text-muted);cursor:pointer">&#10005;</button>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Головне</span>
+      <a href="/admin" class="sidebar-link"><span class="icon"><i class="fa-solid fa-gauge"></i></span> Дашборд</a>
+      <a href="/admin/profile" class="sidebar-link"><span class="icon"><i class="fa-solid fa-user"></i></span> Мій профіль</a>
+      <span class="nav-section-label">Управління</span>
+      <a href="/admin/events" class="sidebar-link"><span class="icon"><i class="fa-solid fa-trophy"></i></span> Заходи</a>
+      <a href="/admin/users" class="sidebar-link"><span class="icon"><i class="fa-solid fa-users"></i></span> Користувачі</a>
+      <a href="/admin/registrations" class="sidebar-link"><span class="icon"><i class="fa-solid fa-list-check"></i></span> Реєстрації</a>
+      <a href="/admin/results" class="sidebar-link active"><span class="icon"><i class="fa-solid fa-medal"></i></span> Результати</a>
+      <span class="nav-section-label">Контент</span>
+      <a href="/admin/news" class="sidebar-link"><span class="icon"><i class="fa-solid fa-newspaper"></i></span> Новини</a>
+      <a href="/admin/media" class="sidebar-link"><span class="icon"><i class="fa-solid fa-images"></i></span> Медіа</a>
+      <span class="nav-section-label">Аналітика</span>
+      <a href="/admin/reports" class="sidebar-link"><span class="icon"><i class="fa-solid fa-chart-bar"></i></span> Звіти</a>
+      <a href="/admin/contacts" class="sidebar-link"><span class="icon"><i class="fa-solid fa-envelope"></i></span> Повідомлення</a>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <div class="cabinet-avatar-placeholder" style="width:36px;height:36px;font-size:.75rem;border:2px solid var(--primary)" id="adminAvatarPh">A</div>
+        <div class="sidebar-user-info"><div class="sidebar-user-name" id="adminName">Адмін</div><div class="sidebar-user-role">Адміністратор</div></div>
+      </div>
+      <div style="display:flex;gap:.5rem;margin-top:.75rem">
+        <a href="/" class="btn btn-ghost btn-sm" style="flex:1"><i class="fa-solid fa-globe"></i></a>
+        <button id="logoutBtn" class="btn btn-ghost btn-sm" style="flex:1;color:var(--error)"><i class="fa-solid fa-right-from-bracket"></i></button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="admin-main">
+    <div class="admin-topbar">
+      <div class="topbar-left">
+        <button class="sidebar-toggle" id="sidebarToggle"><i class="fa-solid fa-bars"></i></button>
+        <div class="breadcrumb"><a href="/admin" style="color:var(--text-muted)">Адмін</a> / <span>Результати</span></div>
+      </div>
+      <div class="topbar-right"></div>
+    </div>
+
+    <div class="admin-content">
+      <div class="page-title">
+        <h1>Управління результатами</h1>
+        <div class="page-title-actions">
+          <button class="btn btn-primary" onclick="openCreateModal()"><i class="fa-solid fa-plus"></i> Додати результат</button>
+        </div>
+      </div>
+
+      <div class="data-table-header">
+        <div class="data-table-search">
+          <input type="text" id="searchInput" placeholder="Пошук за учасником або заходом..." oninput="debounceSearch()">
+          <button onclick="loadResults()"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </div>
+        <div class="table-actions" style="display:flex;gap:.5rem">
+          <select class="form-control" id="eventFilter" onchange="loadResults()" style="padding:.45rem .875rem;font-size:.875rem">
+            <option value="">Всі заходи</option>
+          </select>
+          <select class="form-control" id="placeFilter" onchange="loadResults()" style="padding:.45rem .875rem;font-size:.875rem">
+            <option value="">Всі місця</option>
+            <option value="1">🥇 1 місце</option>
+            <option value="2">🥈 2 місце</option>
+            <option value="3">🥉 3 місце</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-wrapper" id="resultsTableWrap">
+        <div class="loader"><div class="spinner"></div></div>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Create/Edit Modal -->
+<div id="resultModal" class="modal-overlay" style="display:none">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-header">
+      <h3 id="modalTitle">Новий результат</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="resultForm">
+        <input type="hidden" id="resultId">
+        <div class="form-group">
+          <label class="form-label">Захід <span class="required">*</span></label>
+          <select class="form-control" id="rEventId" required>
+            <option value="">— оберіть захід —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Учасник <span class="required">*</span></label>
+          <input class="form-control" type="text" id="rUserSearch" placeholder="Введіть ім'я або email..." oninput="searchUsers()">
+          <input type="hidden" id="rUserId">
+          <div id="userSuggestions" style="display:none;position:relative;z-index:10"></div>
+          <div id="selectedUser" style="display:none;margin-top:.5rem"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Місце <span class="required">*</span></label>
+            <input class="form-control" type="number" id="rPlace" min="1" max="999" required placeholder="1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Бали</label>
+            <input class="form-control" type="number" id="rPoints" min="0" placeholder="0">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Результат</label>
+            <input class="form-control" type="text" id="rValue" placeholder="напр. 10.5">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Одиниця</label>
+            <input class="form-control" type="text" id="rUnit" placeholder="сек / м / кг / балів">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Нотатки</label>
+          <textarea class="form-control" id="rNotes" rows="2" placeholder="Додаткова інформація..."></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Скасувати</button>
+      <button class="btn btn-primary" onclick="saveResult()" id="saveResultBtn"><i class="fa-solid fa-floppy-disk"></i> Зберегти</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+if (!requireAdminAuth()) throw new Error('Unauthorized');
+
+var currentPage = 1;
+var searchTimer;
+var userSearchTimer;
+var allEvents = [];
+
+function toggleSidebar() {
+  if (window.innerWidth > 1024) {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+    var m = document.querySelector('.admin-main');
+    if (m) m.classList.toggle('expanded');
+  } else {
+    document.getElementById('sidebar').classList.toggle('mobile-open');
+    document.getElementById('sidebarOverlay').classList.toggle('visible');
+  }
+}
+
+function debounceSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(function() { currentPage = 1; loadResults(); }, 400);
+}
+
+function closeModal() {
+  document.getElementById('resultModal').style.display = 'none';
+  document.getElementById('rUserId').value = '';
+  document.getElementById('rUserSearch').value = '';
+  document.getElementById('selectedUser').style.display = 'none';
+  document.getElementById('userSuggestions').style.display = 'none';
+}
+
+function openCreateModal() {
+  document.getElementById('modalTitle').textContent = 'Новий результат';
+  document.getElementById('resultId').value = '';
+  document.getElementById('resultForm').reset();
+  document.getElementById('rUserId').value = '';
+  document.getElementById('selectedUser').style.display = 'none';
+  document.getElementById('userSuggestions').style.display = 'none';
+  document.getElementById('resultModal').style.display = 'flex';
+}
+
+function openEditModal(result) {
+  document.getElementById('modalTitle').textContent = 'Редагувати результат';
+  document.getElementById('resultId').value = result.id;
+  document.getElementById('rEventId').value = result.event_id || '';
+  document.getElementById('rUserId').value = result.user_id || '';
+  document.getElementById('rUserSearch').value = (result.first_name || '') + ' ' + (result.last_name || '');
+  document.getElementById('rPlace').value = result.place || '';
+  document.getElementById('rPoints').value = result.points || '';
+  document.getElementById('rValue').value = result.result_value || '';
+  document.getElementById('rUnit').value = result.result_unit || '';
+  document.getElementById('rNotes').value = result.notes || '';
+
+  if (result.user_id) {
+    document.getElementById('selectedUser').style.display = 'block';
+    document.getElementById('selectedUser').innerHTML =
+      '<div style="padding:.5rem;background:var(--bg-card);border-radius:6px;font-size:.875rem">' +
+      '<i class="fa-solid fa-user" style="color:var(--primary)"></i> ' +
+      (result.first_name || '') + ' ' + (result.last_name || '') +
+      (result.email ? ' (' + result.email + ')' : '') + '</div>';
+  }
+
+  document.getElementById('resultModal').style.display = 'flex';
+}
+
+var userSearchDebounce;
+function searchUsers() {
+  clearTimeout(userSearchDebounce);
+  userSearchDebounce = setTimeout(async function() {
+    var q = document.getElementById('rUserSearch').value.trim();
+    if (!q || q.length < 2) {
+      document.getElementById('userSuggestions').style.display = 'none';
+      return;
+    }
+    try {
+      var data = await API.get('/admin/users?search=' + encodeURIComponent(q) + '&limit=5', true);
+      var users = data.users || data.data || data || [];
+      var box = document.getElementById('userSuggestions');
+      if (!users.length) { box.style.display = 'none'; return; }
+      box.style.display = 'block';
+      box.innerHTML = '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-top:.25rem">' +
+        users.map(function(u) {
+          return '<div style="padding:.6rem 1rem;cursor:pointer;border-bottom:1px solid var(--border);font-size:.875rem" ' +
+            'onclick="selectUser(' + u.id + ',\'' + (u.first_name + ' ' + u.last_name).replace(/'/g,'') + '\',\'' + u.email + '\')">' +
+            '<strong>' + u.first_name + ' ' + u.last_name + '</strong> <span style="color:var(--text-muted)">' + u.email + '</span></div>';
+        }).join('') + '</div>';
+    } catch(e) {}
+  }, 300);
+}
+
+function selectUser(id, name, email) {
+  document.getElementById('rUserId').value = id;
+  document.getElementById('rUserSearch').value = name;
+  document.getElementById('userSuggestions').style.display = 'none';
+  var sel = document.getElementById('selectedUser');
+  sel.style.display = 'block';
+  sel.innerHTML = '<div style="padding:.5rem;background:var(--bg-card);border-radius:6px;font-size:.875rem">' +
+    '<i class="fa-solid fa-user" style="color:var(--primary)"></i> ' + name + ' (' + email + ')</div>';
+}
+
+async function saveResult() {
+  var id = document.getElementById('resultId').value;
+  var btn = document.getElementById('saveResultBtn');
+  btn.disabled = true;
+
+  var userId = document.getElementById('rUserId').value;
+  var eventId = document.getElementById('rEventId').value;
+  var place = document.getElementById('rPlace').value;
+
+  if (!eventId || !userId || !place) {
+    showToast('Заповніть обов\'язкові поля', 'error');
+    btn.disabled = false;
+    return;
+  }
+
+  try {
+    var payload = {
+      event_id: parseInt(eventId),
+      user_id: parseInt(userId),
+      place: parseInt(place),
+      points: parseInt(document.getElementById('rPoints').value) || 0,
+      result_value: document.getElementById('rValue').value.trim() || null,
+      result_unit: document.getElementById('rUnit').value.trim() || null,
+      notes: document.getElementById('rNotes').value.trim() || null
+    };
+
+    if (id) {
+      await API.put('/admin/results/' + id, payload, true);
+      showToast('Результат оновлено!', 'success');
+    } else {
+      await API.post('/admin/results', payload, true);
+      showToast('Результат додано!', 'success');
+    }
+    closeModal();
+    loadResults();
+  } catch(err) {
+    showToast(err.message || 'Помилка', 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function deleteResult(id) {
+  if (!confirm('Видалити результат?')) return;
+  try {
+    await API.delete('/admin/results/' + id, true);
+    showToast('Результат видалено', 'success');
+    loadResults();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+function placeIcon(place) {
+  if (place === 1) return '<span style="color:#FFD700;font-size:1.1em">🥇</span>';
+  if (place === 2) return '<span style="font-size:1.1em">🥈</span>';
+  if (place === 3) return '<span style="font-size:1.1em">🥉</span>';
+  return '<span style="color:var(--text-muted)">' + place + '</span>';
+}
+
+async function loadResults() {
+  var search = document.getElementById('searchInput').value.trim();
+  var eventId = document.getElementById('eventFilter').value;
+  var place = document.getElementById('placeFilter').value;
+  var wrap = document.getElementById('resultsTableWrap');
+  wrap.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+
+  try {
+    var params = '?page=' + currentPage + '&limit=20';
+    if (search) params += '&search=' + encodeURIComponent(search);
+    if (eventId) params += '&event_id=' + eventId;
+    if (place) params += '&place=' + place;
+
+    var data = await API.get('/admin/results' + params, true);
+    var results = data.results || data.data || data || [];
+    var total = data.total || results.length;
+    var totalPages = data.totalPages || Math.ceil(total / 20);
+
+    if (!results.length) {
+      wrap.innerHTML = '<div class="empty-state" style="padding:3rem"><div class="empty-icon">&#127941;</div><h3>Результатів не знайдено</h3></div>';
+      document.getElementById('pagination').innerHTML = '';
+      return;
+    }
+
+    wrap.innerHTML = '<table class="table"><thead><tr>' +
+      '<th>Місце</th><th>Учасник</th><th>Захід</th><th>Результат</th><th>Бали</th><th>Нотатки</th><th>Дії</th>' +
+    '</tr></thead><tbody>' +
+    results.map(function(r) {
+      var name = (r.first_name || '') + ' ' + (r.last_name || '');
+      var resultStr = r.result_value ? r.result_value + (r.result_unit ? ' ' + r.result_unit : '') : '—';
+      return '<tr>' +
+        '<td style="text-align:center;font-size:1.2em">' + placeIcon(r.place) + '</td>' +
+        '<td>' +
+          '<div style="font-weight:600">' + name.trim() + '</div>' +
+          '<div style="font-size:.8rem;color:var(--text-muted)">' + (r.email || '') + '</div>' +
+        '</td>' +
+        '<td>' +
+          '<div style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (r.event_title || r.title || '—') + '</div>' +
+          (r.discipline_name ? '<div style="font-size:.8rem;color:var(--text-muted)">' + r.discipline_name + '</div>' : '') +
+        '</td>' +
+        '<td><span style="font-weight:600">' + resultStr + '</span></td>' +
+        '<td><span class="badge badge-primary">' + (r.points || 0) + ' б.</span></td>' +
+        '<td style="color:var(--text-muted);font-size:.875rem;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (r.notes || '—') + '</td>' +
+        '<td><div style="display:flex;gap:.4rem">' +
+          '<button class="btn btn-outline btn-sm" onclick="openEditModal(' + JSON.stringify(r).replace(/"/g,'&quot;') + ')"><i class="fa-solid fa-pen"></i></button>' +
+          '<button class="btn btn-danger btn-sm" onclick="deleteResult(' + r.id + ')"><i class="fa-solid fa-trash"></i></button>' +
+        '</div></td>' +
+      '</tr>';
+    }).join('') + '</tbody></table>';
+
+    var pag = document.getElementById('pagination');
+    pag.innerHTML = '';
+    for (var i = 1; i <= Math.min(totalPages, 10); i++) {
+      (function(page) {
+        var btn = document.createElement('button');
+        btn.className = 'page-btn' + (page === currentPage ? ' active' : '');
+        btn.textContent = page;
+        btn.onclick = function() { currentPage = page; loadResults(); };
+        pag.appendChild(btn);
+      })(i);
+    }
+  } catch(err) {
+    wrap.innerHTML = '<div class="empty-state" style="padding:2rem"><div class="empty-icon">&#10060;</div><h3>Помилка</h3></div>';
+  }
+}
+
+async function loadEvents() {
+  try {
+    var data = await API.get('/admin/events?limit=200', true);
+    allEvents = data.events || data.data || data || [];
+    var sel1 = document.getElementById('eventFilter');
+    var sel2 = document.getElementById('rEventId');
+    allEvents.forEach(function(e) {
+      var opt1 = document.createElement('option');
+      opt1.value = e.id; opt1.textContent = e.title;
+      sel1.appendChild(opt1);
+      var opt2 = document.createElement('option');
+      opt2.value = e.id; opt2.textContent = e.title;
+      sel2.appendChild(opt2);
+    });
+  } catch(e) {}
+}
+
+(function() {
+  var user = Auth.getUser();
+  if (user) {
+    document.getElementById('adminAvatarPh').textContent = (((user.first_name||'')[0]||'') + ((user.last_name||'')[0]||'')).toUpperCase();
+    document.getElementById('adminName').textContent = [user.first_name, user.last_name].filter(Boolean).join(' ');
+  }
+})();
+
+loadEvents();
+loadResults();
+document.getElementById('sidebarOverlay').addEventListener('click', toggleSidebar);
+document.getElementById('sidebarClose').addEventListener('click', toggleSidebar);
+document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+document.getElementById('logoutBtn').addEventListener('click', function() { Auth.logout(); });
+</script>
+</body>
+</html>

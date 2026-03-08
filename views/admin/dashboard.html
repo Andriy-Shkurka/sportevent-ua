@@ -1,0 +1,196 @@
+﻿<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Адмін-панель | СпортUA</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="admin-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <a href="/" class="logo" style="font-size:1.1rem"><div class="logo-icon" style="width:28px;height:28px;font-size:.85rem">&#9889;</div>Спорт<span>UA</span></a>
+      <button id="sidebarClose" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem">&#10005;</button>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Головне</span>
+      <a href="/admin" class="sidebar-link active"><span class="icon"><i class="fa-solid fa-gauge"></i></span> Дашборд</a>
+      <a href="/admin/profile" class="sidebar-link"><span class="icon"><i class="fa-solid fa-user"></i></span> Мій профіль</a>
+      <span class="nav-section-label">Управління</span>
+      <a href="/admin/events" class="sidebar-link"><span class="icon"><i class="fa-solid fa-trophy"></i></span> Заходи</a>
+      <a href="/admin/users" class="sidebar-link"><span class="icon"><i class="fa-solid fa-users"></i></span> Користувачі</a>
+      <a href="/admin/registrations" class="sidebar-link"><span class="icon"><i class="fa-solid fa-list-check"></i></span> Реєстрації</a>
+      <a href="/admin/results" class="sidebar-link"><span class="icon"><i class="fa-solid fa-medal"></i></span> Результати</a>
+      <span class="nav-section-label">Контент</span>
+      <a href="/admin/news" class="sidebar-link"><span class="icon"><i class="fa-solid fa-newspaper"></i></span> Новини</a>
+      <a href="/admin/media" class="sidebar-link"><span class="icon"><i class="fa-solid fa-images"></i></span> Медіа</a>
+      <span class="nav-section-label">Аналітика</span>
+      <a href="/admin/reports" class="sidebar-link"><span class="icon"><i class="fa-solid fa-chart-bar"></i></span> Звіти</a>
+      <a href="/admin/contacts" class="sidebar-link"><span class="icon"><i class="fa-solid fa-envelope"></i></span> Повідомлення</a>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <div class="cabinet-avatar-placeholder" style="width:36px;height:36px;font-size:.75rem;border:2px solid var(--primary)" id="adminAvatarPh">A</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="adminName">Адміністратор</div>
+          <div class="sidebar-user-role">Адміністратор</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:.5rem;margin-top:.75rem">
+        <a href="/" class="btn btn-ghost btn-sm" style="flex:1" title="На сайт"><i class="fa-solid fa-globe"></i></a>
+        <button id="logoutBtn" class="btn btn-ghost btn-sm" style="flex:1;color:var(--error)" title="Вийти"><i class="fa-solid fa-right-from-bracket"></i></button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="admin-main" id="adminMain">
+    <div class="admin-topbar">
+      <div class="topbar-left">
+        <button class="sidebar-toggle" id="sidebarToggle"><i class="fa-solid fa-bars"></i></button>
+        <div class="breadcrumb"><a href="/admin" style="color:var(--text-muted)">Адмін</a> / <span>Дашборд</span></div>
+      </div>
+      <div class="topbar-right">
+        <a href="/events" class="btn btn-outline btn-sm" target="_blank"><i class="fa-solid fa-globe"></i> Сайт</a>
+        <a href="/admin/contacts" class="topbar-notif"><i class="fa-solid fa-envelope"></i><span class="notif-dot" id="msgDot" style="display:none"></span></a>
+      </div>
+    </div>
+
+    <div class="admin-content">
+      <div class="page-title">
+        <div><h1>Дашборд</h1><p style="color:var(--text-muted);margin-top:.25rem">Огляд системи</p></div>
+        <div class="page-title-actions">
+          <a href="/admin/events" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Новий захід</a>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="admin-stats" id="adminStats">
+        <div class="stat-card"><div class="stat-card-icon blue"><i class="fa-solid fa-trophy" style="color:var(--info)"></i></div><div class="stat-card-info"><div class="stat-card-value" id="stEvents">—</div><div class="stat-card-label">Заходів</div></div></div>
+        <div class="stat-card"><div class="stat-card-icon green"><i class="fa-solid fa-users" style="color:var(--success)"></i></div><div class="stat-card-info"><div class="stat-card-value" id="stUsers">—</div><div class="stat-card-label">Користувачів</div></div></div>
+        <div class="stat-card"><div class="stat-card-icon orange"><i class="fa-solid fa-list-check" style="color:var(--warning)"></i></div><div class="stat-card-info"><div class="stat-card-value" id="stRegs">—</div><div class="stat-card-label">Реєстрацій</div></div></div>
+        <div class="stat-card"><div class="stat-card-icon red"><i class="fa-solid fa-newspaper" style="color:var(--primary)"></i></div><div class="stat-card-info"><div class="stat-card-value" id="stNews">—</div><div class="stat-card-label">Новин</div></div></div>
+      </div>
+
+      <!-- Second row stats -->
+      <div class="admin-stats" id="adminStats2" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+        <div class="stat-card"><div class="stat-card-icon blue"><i class="fa-solid fa-hourglass-half" style="color:var(--info)"></i></div><div class="stat-card-info"><div class="stat-card-value" id="stPending">—</div><div class="stat-card-label">Заявок на розгляді</div></div></div>
+        <div class="stat-card"><div class="stat-card-icon green"><i class="fa-solid fa-calendar-check" style="color:var(--success)"></i></div><div class="stat-card-info"><div class="stat-card-value" id="stUpcoming">—</div><div class="stat-card-label">Майбутніх заходів</div></div></div>
+        <div class="stat-card"><div class="stat-card-icon orange"><i class="fa-solid fa-envelope-open" style="color:var(--warning)"></i></div><div class="stat-card-info"><div class="stat-card-value" id="stMsgs">—</div><div class="stat-card-label">Нових повідомлень</div></div></div>
+      </div>
+
+      <!-- Tables -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:1.5rem" id="dashTables">
+        <!-- Recent registrations -->
+        <div class="chart-container">
+          <h3><i class="fa-solid fa-list-check" style="color:var(--warning)"></i> Останні реєстрації</h3>
+          <div id="recentRegsAdmin">
+            <div class="loader"><div class="spinner"></div></div>
+          </div>
+        </div>
+
+        <!-- Activity -->
+        <div class="chart-container">
+          <h3><i class="fa-solid fa-clock-rotate-left" style="color:var(--info)"></i> Нещодавня активність</h3>
+          <div class="activity-feed" id="activityFeed">
+            <div class="loader"><div class="spinner"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+if (!requireAdminAuth()) throw new Error('Unauthorized');
+
+function toggleSidebar() {
+  if (window.innerWidth > 1024) {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+    var m = document.querySelector('.admin-main');
+    if (m) m.classList.toggle('expanded');
+  } else {
+    document.getElementById('sidebar').classList.toggle('mobile-open');
+    document.getElementById('sidebarOverlay').classList.toggle('visible');
+  }
+}
+document.getElementById('sidebarOverlay').addEventListener('click', toggleSidebar);
+document.getElementById('sidebarClose').addEventListener('click', toggleSidebar);
+document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+document.getElementById('logoutBtn').addEventListener('click', function() { Auth.logout(); });
+
+async function loadDashboard() {
+  var user = Auth.getUser();
+  if (user) {
+    var initials = (((user.first_name||'')[0]||'') + ((user.last_name||'')[0]||'')).toUpperCase();
+    document.getElementById('adminAvatarPh').textContent = initials;
+    document.getElementById('adminName').textContent = [user.first_name, user.last_name].filter(Boolean).join(' ');
+  }
+
+  try {
+    var data = await API.get('/admin/stats', true);
+    document.getElementById('stEvents').textContent  = (data.events && data.events.total) || data.total_events || 0;
+    document.getElementById('stUsers').textContent   = (data.users && data.users.total)   || data.total_users  || 0;
+    document.getElementById('stRegs').textContent    = (data.registrations && data.registrations.total) || data.total_registrations || 0;
+    document.getElementById('stNews').textContent    = (data.news && data.news.total)     || data.total_news   || 0;
+    document.getElementById('stPending').textContent = (data.registrations && data.registrations.pending) || data.pending_registrations || 0;
+    document.getElementById('stUpcoming').textContent= (data.events && data.events.upcoming) || data.upcoming_events || 0;
+    var msgs = data.contacts_count || data.new_messages || 0;
+    document.getElementById('stMsgs').textContent    = msgs;
+
+    if (msgs > 0) {
+      document.getElementById('msgDot').style.display = '';
+    }
+
+    // Recent registrations
+    var regsEl = document.getElementById('recentRegsAdmin');
+    var regs = data.recentRegistrations || data.recent_registrations || [];
+    if (regs.length) {
+      regsEl.innerHTML = '<div style="display:flex;flex-direction:column">' + regs.slice(0,8).map(function(r) {
+        return '<div style="display:flex;align-items:center;gap:.75rem;padding:.65rem 0;border-bottom:1px solid rgba(48,54,61,.4)">' +
+          '<div style="flex:1;min-width:0"><div style="font-size:.875rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(r.user_name || ((r.first_name||'') + ' ' + (r.last_name||'')).trim()) + '</div>' +
+          '<div style="font-size:.75rem;color:var(--text-muted)">' + esc(r.event_title||'') + '</div></div>' +
+          regStatusBadge(r.status) +
+          '<span style="font-size:.75rem;color:var(--text-muted)">' + timeAgo(r.created_at) + '</span>' +
+        '</div>';
+      }).join('') + '</div>';
+    } else {
+      regsEl.innerHTML = '<div class="empty-state" style="padding:1.5rem"><div class="empty-icon" style="font-size:1.5rem">&#128197;</div><h3 style="font-size:.9rem">Реєстрацій немає</h3></div>';
+    }
+
+    // Activity
+    var actEl = document.getElementById('activityFeed');
+    var activities = data.recent_activity || [];
+    if (activities.length) {
+      actEl.innerHTML = activities.slice(0, 8).map(function(a) {
+        var colorMap = { registration: 'green', event: 'blue', user: 'orange', news: 'red' };
+        var color = colorMap[a.type] || 'blue';
+        return '<div class="activity-item"><div class="activity-dot ' + color + '"></div>' +
+          '<div class="activity-text"><span>' + esc(a.message) + '</span><div class="activity-time">' + timeAgo(a.created_at) + '</div></div></div>';
+      }).join('');
+    } else {
+      actEl.innerHTML = '<div class="empty-state" style="padding:1.5rem"><div class="empty-icon" style="font-size:1.5rem">&#128337;</div><h3 style="font-size:.9rem">Активності немає</h3></div>';
+    }
+  } catch(err) {
+    showToast('Помилка завантаження статистики', 'error');
+  }
+}
+
+if (window.innerWidth < 768) {
+  document.getElementById('dashTables').style.gridTemplateColumns = '1fr';
+}
+
+loadDashboard();
+</script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FAQ | СпортUA</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .faq-item { border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; margin-bottom:.75rem; transition:var(--transition); }
+    .faq-item.open { border-color:var(--primary); }
+    .faq-question { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:1.25rem 1.5rem; cursor:pointer; font-weight:600; background:var(--bg-card); transition:var(--transition); }
+    .faq-question:hover { background:var(--bg-card2); }
+    .faq-icon { color:var(--text-muted); transition:transform .3s; flex-shrink:0; }
+    .faq-item.open .faq-icon { transform:rotate(180deg); color:var(--primary); }
+    .faq-answer { display:none; padding:1.25rem 1.5rem; background:var(--bg-card); border-top:1px solid var(--border); color:var(--text-muted); line-height:1.8; }
+    .faq-item.open .faq-answer { display:block; }
+  </style>
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+
+<nav class="navbar">
+  <div class="container">
+    <div class="navbar-inner">
+      <a href="/" class="logo"><div class="logo-icon">&#9889;</div>Спорт<span>UA</span></a>
+      <div class="nav-links">
+        <a href="/">Головна</a><a href="/events">Заходи</a><a href="/news">Новини</a>
+        <a href="/calendar">Календар</a><a href="/rankings">Рейтинг</a><a href="/gallery">Галерея</a>
+      </div>
+      <div class="nav-actions" id="navActions"></div>
+      <button class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="/">Головна</a><a href="/events">Заходи</a><a href="/news">Новини</a><a href="/calendar">Календар</a><a href="/rankings">Рейтинг</a><a href="/gallery">Галерея</a>
+  </div>
+</nav>
+
+<div style="background:var(--bg-card);border-bottom:1px solid var(--border);padding:2.5rem 0">
+  <div class="container">
+    <span class="section-label"><i class="fa-solid fa-circle-question"></i> Підтримка</span>
+    <h1 style="margin:.5rem 0 .75rem">Часті запитання</h1>
+    <p>Відповіді на найпоширеніші питання</p>
+  </div>
+</div>
+
+<main>
+  <div class="section">
+    <div class="container" style="max-width:800px">
+      <div id="faqContent">
+        <div class="loader"><div class="spinner"></div></div>
+      </div>
+      <div class="card" style="margin-top:3rem">
+        <div class="card-body" style="text-align:center;padding:2rem">
+          <div style="font-size:2rem;margin-bottom:.75rem">&#128172;</div>
+          <h3 style="margin-bottom:.5rem">Не знайшли відповідь?</h3>
+          <p style="margin-bottom:1.25rem">Зверніться до нашої служби підтримки</p>
+          <a href="/contacts" class="btn btn-primary"><i class="fa-solid fa-envelope"></i> Написати нам</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-bottom">
+      <a href="/" class="logo"><div class="logo-icon">&#9889;</div>Спорт<span>UA</span></a>
+      <span>&copy; 2025 СпортUA</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/app.js"></script>
+<script>
+function toggleFaq(el) {
+  el.parentElement.classList.toggle('open');
+}
+
+// Fallback static FAQ if API empty
+var staticFAQ = [
+  { question: 'Як зареєструватись на захід?', answer: 'Створіть акаунт або увійдіть в систему. Знайдіть потрібний захід у розділі "Заходи" та натисніть "Зареєструватись". Ваша заявка буде розглянута організаторами.' },
+  { question: 'Чи можна відкликати реєстрацію?', answer: 'Так, ви можете відкликати реєстрацію до настання дедлайну. Для цього перейдіть у ваш особистий кабінет → Мої реєстрації та натисніть "Відкликати".' },
+  { question: 'Як дізнатись про результати змагань?', answer: 'Результати публікуються на сторінці кожного заходу після завершення змагань. Також ви можете переглянути свої результати в особистому кабінеті.' },
+  { question: 'Як потрапити до рейтингу?', answer: 'Рейтинг формується автоматично на основі результатів змагань. Беріть участь у заходах, посідайте призові місця та набирайте бали для входження до рейтингу.' },
+  { question: 'Чи безкоштовна реєстрація?', answer: 'Реєстрація на платформі є безкоштовною. Вартість участі у конкретних заходах вказана на сторінці кожного змагання.' },
+  { question: 'Як змінити дані профілю?', answer: 'Увійдіть у ваш кабінет та перейдіть до розділу "Профіль". Там ви можете оновити особисті дані, фото та налаштування.' },
+  { question: 'Як скинути пароль?', answer: 'На сторінці входу натисніть "Забули пароль?". На ваш email буде надіслано інструкції зі скидання паролю.' },
+  { question: 'В яких дисциплінах проводяться змагання?', answer: 'Платформа підтримує численні спортивні дисципліни. Перелік доступних дисциплін можна переглянути у фільтрі на сторінці заходів.' }
+];
+
+async function loadFAQ() {
+  var content = document.getElementById('faqContent');
+  var items = [];
+  try {
+    var data = await API.get('/faq');
+    items = data && data.length ? data : staticFAQ;
+  } catch(e) {
+    items = staticFAQ;
+  }
+
+  if (!items.length) {
+    content.innerHTML = '<div class="empty-state"><div class="empty-icon">&#10067;</div><h3>Питань поки немає</h3></div>';
+    return;
+  }
+
+  content.innerHTML = items.map(function(item, i) {
+    return '<div class="faq-item" id="faq-' + i + '">' +
+      '<div class="faq-question" onclick="toggleFaq(this)">' +
+        '<span>' + item.question + '</span>' +
+        '<i class="fa-solid fa-chevron-down faq-icon"></i>' +
+      '</div>' +
+      '<div class="faq-answer">' + item.answer + '</div>' +
+    '</div>';
+  }).join('');
+
+  // Open first by default
+  var first = document.querySelector('.faq-item');
+  if (first) first.classList.add('open');
+}
+
+loadFAQ();
+</script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Вхід | СпортUA</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    body { justify-content: center; align-items: center; min-height: 100vh; background: var(--bg); }
+    .auth-wrap { width: 100%; max-width: 420px; padding: 1rem; }
+    .auth-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 2.5rem 2rem; }
+    .auth-logo { text-align: center; margin-bottom: 2rem; }
+    .auth-logo .logo { justify-content: center; font-size: 1.5rem; }
+    .auth-title { text-align: center; margin-bottom: 2rem; }
+    .auth-title h1 { font-size: 1.75rem; margin-bottom: .5rem; }
+    .auth-title p { font-size: .9rem; color: var(--text-muted); }
+    .auth-footer { text-align: center; margin-top: 1.5rem; font-size: .875rem; color: var(--text-muted); }
+    .auth-footer a { color: var(--primary); }
+    .divider-text { text-align: center; color: var(--text-muted); font-size: .8rem; margin: 1.25rem 0; position: relative; }
+    .divider-text::before, .divider-text::after { content:''; position:absolute; top:50%; width:40%; height:1px; background:var(--border); }
+    .divider-text::before { left:0; } .divider-text::after { right:0; }
+    .pw-wrap { position: relative; }
+    .pw-wrap input { padding-right: 2.75rem; }
+    .pw-toggle { position: absolute; right: .75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: .95rem; }
+    .pw-toggle:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="auth-wrap">
+  <div class="auth-logo">
+    <a href="/" class="logo" style="display:inline-flex;text-decoration:none">
+      <div class="logo-icon">&#9889;</div>
+      Спорт<span>UA</span>
+    </a>
+  </div>
+
+  <div class="auth-card">
+    <div class="auth-title">
+      <h1>Вхід до системи</h1>
+      <p>Введіть дані свого акаунту</p>
+    </div>
+
+    <div id="errorAlert" class="alert alert-error mb-3 hidden">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <span id="errorMsg"></span>
+    </div>
+
+    <form id="loginForm">
+      <div class="form-group">
+        <label class="form-label" for="email">Email <span class="required">*</span></label>
+        <input class="form-control" type="email" id="email" name="email" placeholder="your@email.com" required autocomplete="email">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Пароль <span class="required">*</span></label>
+        <div class="pw-wrap">
+          <input class="form-control" type="password" id="password" name="password" placeholder="Мінімум 8 символів" required autocomplete="current-password">
+          <button type="button" class="pw-toggle" id="pwToggle" aria-label="Показати пароль">
+            <svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg class="eye-off-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full btn-lg" id="submitBtn">
+        <span id="submitText">Увійти</span>
+        <span id="submitLoader" class="hidden"><div class="spinner spinner-sm" style="border-color:rgba(255,255,255,.3);border-top-color:#fff"></div></span>
+      </button>
+    </form>
+
+    <p class="auth-footer">
+      Немає акаунту? <a href="/register">Зареєструватись</a>
+    </p>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+// Redirect if already logged in
+if (Auth.isLoggedIn()) {
+  window.location.href = Auth.isAdmin() ? '/admin' : '/cabinet';
+}
+
+document.getElementById('pwToggle').addEventListener('click', function() {
+  var input = document.getElementById('password');
+  var isText = input.type === 'text';
+  input.type = isText ? 'password' : 'text';
+  this.querySelector('.eye-icon').style.display = isText ? '' : 'none';
+  this.querySelector('.eye-off-icon').style.display = isText ? 'none' : '';
+});
+
+function showError(msg) {
+  const el = document.getElementById('errorAlert');
+  document.getElementById('errorMsg').textContent = msg;
+  el.classList.remove('hidden');
+}
+
+function hideError() {
+  document.getElementById('errorAlert').classList.add('hidden');
+}
+
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  hideError();
+
+  const email    = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const btn      = document.getElementById('submitBtn');
+  const text     = document.getElementById('submitText');
+  const loader   = document.getElementById('submitLoader');
+
+  btn.disabled = true;
+  text.classList.add('hidden');
+  loader.classList.remove('hidden');
+
+  try {
+    const data = await API.post('/auth/login', { email, password });
+    Auth.setSession(data.token, data.user);
+    showToast('Вхід успішний!', 'success');
+    setTimeout(function() {
+      window.location.href = data.redirectTo || '/cabinet';
+    }, 500);
+  } catch(err) {
+    showError(err.message || 'Помилка входу');
+    btn.disabled = false;
+    text.classList.remove('hidden');
+    loader.classList.add('hidden');
+  }
+});
+</script>
+</body>
+</html>

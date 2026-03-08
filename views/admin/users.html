@@ -1,0 +1,415 @@
+﻿<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Користувачі | Адмін | СпортUA</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <a href="/" class="logo" style="font-size:1.1rem"><div class="logo-icon" style="width:28px;height:28px;font-size:.85rem">&#9889;</div>Спорт<span>UA</span></a>
+      <button id="sidebarClose" style="background:none;border:none;color:var(--text-muted);cursor:pointer">&#10005;</button>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Головне</span>
+      <a href="/admin" class="sidebar-link"><span class="icon"><i class="fa-solid fa-gauge"></i></span> Дашборд</a>
+      <a href="/admin/profile" class="sidebar-link"><span class="icon"><i class="fa-solid fa-user"></i></span> Мій профіль</a>
+      <span class="nav-section-label">Управління</span>
+      <a href="/admin/events" class="sidebar-link"><span class="icon"><i class="fa-solid fa-trophy"></i></span> Заходи</a>
+      <a href="/admin/users" class="sidebar-link active"><span class="icon"><i class="fa-solid fa-users"></i></span> Користувачі</a>
+      <a href="/admin/registrations" class="sidebar-link"><span class="icon"><i class="fa-solid fa-list-check"></i></span> Реєстрації</a>
+      <a href="/admin/results" class="sidebar-link"><span class="icon"><i class="fa-solid fa-medal"></i></span> Результати</a>
+      <span class="nav-section-label">Контент</span>
+      <a href="/admin/news" class="sidebar-link"><span class="icon"><i class="fa-solid fa-newspaper"></i></span> Новини</a>
+      <a href="/admin/media" class="sidebar-link"><span class="icon"><i class="fa-solid fa-images"></i></span> Медіа</a>
+      <span class="nav-section-label">Аналітика</span>
+      <a href="/admin/reports" class="sidebar-link"><span class="icon"><i class="fa-solid fa-chart-bar"></i></span> Звіти</a>
+      <a href="/admin/contacts" class="sidebar-link"><span class="icon"><i class="fa-solid fa-envelope"></i></span> Повідомлення</a>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <div class="cabinet-avatar-placeholder" style="width:36px;height:36px;font-size:.75rem;border:2px solid var(--primary)" id="adminAvatarPh">A</div>
+        <div class="sidebar-user-info"><div class="sidebar-user-name" id="adminName">Адмін</div><div class="sidebar-user-role">Адміністратор</div></div>
+      </div>
+      <div style="display:flex;gap:.5rem;margin-top:.75rem">
+        <a href="/" class="btn btn-ghost btn-sm" style="flex:1"><i class="fa-solid fa-globe"></i></a>
+        <button id="logoutBtn" class="btn btn-ghost btn-sm" style="flex:1;color:var(--error)"><i class="fa-solid fa-right-from-bracket"></i></button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="admin-main">
+    <div class="admin-topbar">
+      <div class="topbar-left">
+        <button class="sidebar-toggle" id="sidebarToggle"><i class="fa-solid fa-bars"></i></button>
+        <div class="breadcrumb"><a href="/admin" style="color:var(--text-muted)">Адмін</a> / <span>Користувачі</span></div>
+      </div>
+    </div>
+
+    <div class="admin-content">
+      <div class="page-title">
+        <h1>Користувачі</h1>
+        <div class="page-title-actions">
+          <button class="btn btn-danger btn-sm" onclick="toggleBanPanel()">
+            <i class="fa-solid fa-envelope-circle-check"></i> Бан за email
+          </button>
+        </div>
+      </div>
+
+      <!-- Ban by email panel -->
+      <div id="banPanel" style="display:none;margin-bottom:1rem">
+        <div class="chart-container" style="padding:1.25rem">
+          <div style="font-weight:700;margin-bottom:1rem"><i class="fa-solid fa-envelope-circle-check" style="color:var(--error)"></i> Бан / розбан за email-адресою</div>
+          <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:flex-end">
+            <div class="form-group" style="flex:2;min-width:200px;margin:0">
+              <label class="form-label" style="font-size:.8rem">Email акаунту</label>
+              <input class="form-control" type="email" id="banEmailInput" placeholder="user@example.com">
+            </div>
+            <div class="form-group" style="flex:3;min-width:200px;margin:0">
+              <label class="form-label" style="font-size:.8rem">Причина (опційно, надсилається користувачу)</label>
+              <input class="form-control" type="text" id="banReasonInput" placeholder="Наприклад: порушення правил платформи">
+            </div>
+            <button class="btn btn-danger" id="banEmailBtn" onclick="doBanByEmail()" style="white-space:nowrap">
+              <i class="fa-solid fa-ban"></i> Виконати
+            </button>
+          </div>
+          <div id="banResult" style="margin-top:.75rem;font-size:.875rem"></div>
+        </div>
+      </div>
+
+      <!-- Tab switcher -->
+      <div style="display:flex;gap:.5rem;margin-bottom:1rem;border-bottom:1px solid var(--border);padding-bottom:.75rem">
+        <button class="user-tab-btn active" id="tab-all"     onclick="setTab('')"       style="padding:.4rem 1rem;border-radius:6px;border:1px solid var(--border);background:var(--primary);color:#fff;cursor:pointer;font-size:.875rem;font-weight:600">
+          <i class="fa-solid fa-users"></i> Всі
+        </button>
+        <button class="user-tab-btn" id="tab-athlete" onclick="setTab('athlete')" style="padding:.4rem 1rem;border-radius:6px;border:1px solid var(--border);background:var(--bg-card2);color:var(--text-primary);cursor:pointer;font-size:.875rem;font-weight:600">
+          <i class="fa-solid fa-person-running"></i> Спортсмени
+        </button>
+        <button class="user-tab-btn" id="tab-team"    onclick="setTab('team')"    style="padding:.4rem 1rem;border-radius:6px;border:1px solid var(--border);background:var(--bg-card2);color:var(--text-primary);cursor:pointer;font-size:.875rem;font-weight:600">
+          <i class="fa-solid fa-people-group"></i> Команди
+        </button>
+      </div>
+
+      <div class="data-table-header">
+        <div class="data-table-search">
+          <input type="text" id="searchInput" placeholder="Пошук за ім'ям або email..." oninput="debounceSearch()">
+          <button onclick="loadUsers()"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </div>
+        <div class="table-actions">
+          <select class="form-control" id="blockFilter" onchange="loadUsers()" style="padding:.45rem .875rem;font-size:.875rem">
+            <option value="">Всі</option>
+            <option value="0">Активні</option>
+            <option value="1">Заблоковані</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-wrapper" id="usersTableWrap">
+        <div class="loader"><div class="spinner"></div></div>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+</div>
+
+<!-- User detail modal -->
+<div id="userModal" class="modal-overlay" style="display:none">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <h3>Деталі користувача</h3>
+      <button class="modal-close" onclick="closeUserModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="userModalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeUserModal()">Закрити</button>
+      <button class="btn btn-danger" id="deleteUserBtn" onclick="deleteUser()" style="margin-right:auto"><i class="fa-solid fa-trash"></i> Видалити</button>
+      <button class="btn btn-warning" id="blockBtn" onclick="toggleBlock()"><i class="fa-solid fa-ban"></i> Заблокувати</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+if (!requireAdminAuth()) throw new Error('Unauthorized');
+
+var currentPage = 1;
+var searchTimer;
+var selectedUser = null;
+var currentRole = '';
+
+function setTab(role) {
+  currentRole = role;
+  currentPage = 1;
+  document.querySelectorAll('.user-tab-btn').forEach(function(btn) {
+    btn.style.background = 'var(--bg-card2)';
+    btn.style.color = 'var(--text-primary)';
+    btn.style.borderColor = 'var(--border)';
+  });
+  var active = document.getElementById('tab-' + (role || 'all'));
+  if (active) { active.style.background = 'var(--primary)'; active.style.color = '#fff'; active.style.borderColor = 'var(--primary)'; }
+  loadUsers();
+}
+
+function toggleSidebar() {
+  if (window.innerWidth > 1024) {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+    var m = document.querySelector('.admin-main');
+    if (m) m.classList.toggle('expanded');
+  } else {
+    document.getElementById('sidebar').classList.toggle('mobile-open');
+    document.getElementById('sidebarOverlay').classList.toggle('visible');
+  }
+}
+
+function debounceSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(function() { currentPage = 1; loadUsers(); }, 400);
+}
+
+function closeUserModal() { document.getElementById('userModal').style.display = 'none'; selectedUser = null; }
+
+async function openUserModal(userId) {
+  document.getElementById('userModal').style.display = 'flex';
+  document.getElementById('userModalBody').innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+  try {
+    var data = await API.get('/admin/users/' + userId, true);
+    var user = data.user;
+    var regs = data.registrations || [];
+    var members = data.teamMembers || [];
+    selectedUser = user;
+    var isTeam = user.role_name === 'team';
+    var initials = (((user.first_name||'')[0]||'') + ((user.last_name||'')[0]||'')).toUpperCase();
+    var avatarStyle = isTeam
+      ? 'width:56px;height:56px;font-size:1.1rem;flex-shrink:0;background:linear-gradient(135deg,#4361ee,#3a0ca3);border-color:#4361ee'
+      : 'width:56px;height:56px;font-size:1.1rem;flex-shrink:0';
+
+    var html =
+      '<div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem">' +
+        '<div class="cabinet-avatar-placeholder" style="' + avatarStyle + '">' +
+          (isTeam ? '<i class="fa-solid fa-people-group" style="font-size:1.2rem"></i>' : esc(initials)) +
+        '</div>' +
+        '<div><div style="font-size:1.1rem;font-weight:700">' + esc(user.first_name) + ' ' + esc(user.last_name) + '</div>' +
+        '<div style="color:var(--text-muted);font-size:.875rem">' + esc(user.email) + '</div>' +
+        '<div style="margin-top:.25rem;display:flex;gap:.4rem;flex-wrap:wrap">' +
+          (isTeam ? '<span class="badge" style="background:rgba(67,97,238,.15);color:#4361ee"><i class="fa-solid fa-people-group"></i> Команда</span>' : '') +
+          (user.is_blocked ? '<span class="badge badge-error">Заблоковано</span>' : '<span class="badge badge-success">Активний</span>') +
+        '</div>' +
+        '</div></div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;font-size:.875rem;margin-bottom:1.25rem">' +
+        '<div><div style="color:var(--text-muted)">Роль</div><div style="font-weight:600">' + esc(user.role_name||'—') + '</div></div>' +
+        '<div><div style="color:var(--text-muted)">Місто</div><div style="font-weight:600">' + esc(user.city||'—') + '</div></div>' +
+        '<div><div style="color:var(--text-muted)">Телефон</div><div style="font-weight:600">' + esc(user.phone||'—') + '</div></div>' +
+        '<div><div style="color:var(--text-muted)">' + (isTeam ? 'Заходів' : 'Реєстрацій') + '</div><div style="font-weight:600">' + regs.length + '</div></div>' +
+        '<div><div style="color:var(--text-muted)">Дата реєстрації</div><div style="font-weight:600">' + formatDate(user.created_at) + '</div></div>' +
+        '<div><div style="color:var(--text-muted)">Останній вхід</div><div style="font-weight:600">' + (user.last_login ? formatDate(user.last_login) : '—') + '</div></div>' +
+      '</div>';
+
+    // Team members section
+    if (isTeam) {
+      html += '<div style="border-top:1px solid var(--border);padding-top:1.1rem">' +
+        '<div style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:.75rem">' +
+          '<i class="fa-solid fa-users"></i> Члени команди (' + members.length + ')' +
+        '</div>';
+      if (!members.length) {
+        html += '<div style="color:var(--text-muted);font-size:.85rem;padding:.5rem 0">Членів команди не знайдено</div>';
+      } else {
+        html += '<div style="display:flex;flex-direction:column;gap:.5rem">';
+        for (var i = 0; i < members.length; i++) {
+          var m = members[i];
+          var mi = ((m.first_name||'')[0] + (m.last_name||'')[0]).toUpperCase();
+          html +=
+            '<div style="display:flex;align-items:center;gap:.65rem;padding:.5rem .75rem;background:var(--bg-card2);border-radius:6px">' +
+              '<div class="cabinet-avatar-placeholder" style="width:30px;height:30px;font-size:.65rem;flex-shrink:0">' + esc(mi) + '</div>' +
+              '<div style="flex:1;min-width:0">' +
+                '<div style="font-weight:600;font-size:.85rem">' + esc(m.first_name) + ' ' + esc(m.last_name) + '</div>' +
+                '<div style="font-size:.75rem;color:var(--text-muted)">' + esc(m.city||'') + '</div>' +
+              '</div>' +
+              '<div style="font-size:.72rem;color:var(--text-muted);white-space:nowrap">' + m.shared_events + ' заход' + (m.shared_events===1?'':'ів') + '</div>' +
+            '</div>';
+        }
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+
+    document.getElementById('userModalBody').innerHTML = html;
+
+    var blockBtn = document.getElementById('blockBtn');
+    if (user.is_blocked) {
+      blockBtn.innerHTML = '<i class="fa-solid fa-check"></i> Розблокувати';
+      blockBtn.className = 'btn btn-success';
+    } else {
+      blockBtn.innerHTML = '<i class="fa-solid fa-ban"></i> Заблокувати';
+      blockBtn.className = 'btn btn-danger';
+    }
+  } catch(e) {
+    document.getElementById('userModalBody').innerHTML = '<p style="color:var(--error)">Помилка завантаження</p>';
+  }
+}
+
+async function toggleBlock() {
+  if (!selectedUser) return;
+  try {
+    await API.patch('/admin/users/' + selectedUser.id + '/toggle-block', {}, true);
+    showToast(selectedUser.is_blocked ? 'Користувача розблоковано' : 'Користувача заблоковано', 'success');
+    closeUserModal();
+    loadUsers();
+  } catch(e) {
+    showToast(e.message, 'error');
+  }
+}
+
+async function loadUsers() {
+  var search = document.getElementById('searchInput').value.trim();
+  var blocked = document.getElementById('blockFilter').value;
+  var wrap = document.getElementById('usersTableWrap');
+  wrap.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+
+  try {
+    var params = '?page=' + currentPage + '&limit=15';
+    if (search) params += '&search=' + encodeURIComponent(search);
+    if (currentRole) params += '&role=' + currentRole;
+    if (blocked !== '') params += '&is_blocked=' + blocked;
+
+    var data = await API.get('/admin/users' + params, true);
+    var users = data.users || data.data || data;
+    var total = data.total || users.length;
+    var totalPages = data.totalPages || Math.ceil(total / 15);
+
+    if (!users.length) {
+      wrap.innerHTML = '<div class="empty-state" style="padding:3rem"><div class="empty-icon">&#128100;</div><h3>Користувачів не знайдено</h3></div>';
+      return;
+    }
+
+    var isTeamTab = currentRole === 'team';
+    var colHeader = isTeamTab ? 'Команда' : 'Учасник';
+    wrap.innerHTML = '<table class="table"><thead><tr>' +
+      '<th>' + colHeader + '</th><th>Email</th><th>Роль</th><th>Місто</th><th>Статус</th><th>Реєстрацій</th><th>Дії</th>' +
+    '</tr></thead><tbody>' +
+    users.map(function(u) {
+      var isTeam = u.role_name === 'team';
+      var initials = (((u.first_name||'')[0]||'') + ((u.last_name||'')[0]||'')).toUpperCase();
+      var avatarStyle = isTeam
+        ? 'width:32px;height:32px;font-size:.65rem;flex-shrink:0;background:linear-gradient(135deg,#4361ee,#3a0ca3);border-color:#4361ee'
+        : 'width:32px;height:32px;font-size:.7rem;flex-shrink:0';
+      var nameBlock = isTeam
+        ? '<div>' +
+            '<div style="display:flex;align-items:center;gap:.4rem">' +
+              '<i class="fa-solid fa-people-group" style="color:#4361ee;font-size:.75rem"></i>' +
+              '<span style="font-weight:700">' + esc(u.first_name) + '</span>' +
+            '</div>' +
+            (u.last_name ? '<div style="font-size:.75rem;color:var(--text-muted)">' + esc(u.last_name) + '</div>' : '') +
+          '</div>'
+        : '<span style="font-weight:600">' + esc(u.first_name) + ' ' + esc(u.last_name) + '</span>';
+      return '<tr>' +
+        '<td><div style="display:flex;align-items:center;gap:.65rem">' +
+          '<div class="cabinet-avatar-placeholder" style="' + avatarStyle + '">' + (isTeam ? '<i class="fa-solid fa-people-group"></i>' : esc(initials)) + '</div>' +
+          nameBlock +
+        '</div></td>' +
+        '<td style="color:var(--text-muted)">' + esc(u.email) + '</td>' +
+        '<td>' + (isTeam ? '<span class="badge" style="background:rgba(67,97,238,.15);color:#4361ee"><i class="fa-solid fa-people-group"></i> Команда</span>' : esc(u.role_name||'—')) + '</td>' +
+        '<td>' + esc(u.city||'—') + '</td>' +
+        '<td>' + (u.is_blocked ? '<span class="badge badge-error">Заблокований</span>' : '<span class="badge badge-success">Активний</span>') + '</td>' +
+        '<td>' + (u.registrations_count||0) + '</td>' +
+        '<td><div style="display:flex;gap:.4rem">' +
+          '<button class="btn btn-outline btn-sm" onclick="openUserModal(' + u.id + ')"><i class="fa-solid fa-eye"></i></button>' +
+          '<button class="btn ' + (u.is_blocked ? 'btn-success' : 'btn-ghost') + ' btn-sm" onclick="quickBlock(' + u.id + ',' + !!u.is_blocked + ',this)" title="' + (u.is_blocked?'Розблокувати':'Заблокувати') + '"><i class="fa-solid fa-ban"></i></button>' +
+        '</div></td>' +
+      '</tr>';
+    }).join('') + '</tbody></table>';
+
+    var pag = document.getElementById('pagination');
+    pag.innerHTML = '';
+    for (var i = 1; i <= Math.min(totalPages, 10); i++) {
+      (function(page) {
+        var btn = document.createElement('button');
+        btn.className = 'page-btn' + (page === currentPage ? ' active' : '');
+        btn.textContent = page;
+        btn.onclick = function() { currentPage = page; loadUsers(); };
+        pag.appendChild(btn);
+      })(i);
+    }
+  } catch(err) {
+    wrap.innerHTML = '<div class="empty-state" style="padding:2rem"><div class="empty-icon">&#10060;</div><h3>Помилка</h3></div>';
+  }
+}
+
+function toggleBanPanel() {
+  var p = document.getElementById('banPanel');
+  p.style.display = p.style.display === 'none' ? '' : 'none';
+  if (p.style.display !== 'none') document.getElementById('banEmailInput').focus();
+}
+
+async function doBanByEmail() {
+  var email = document.getElementById('banEmailInput').value.trim();
+  var reason = document.getElementById('banReasonInput').value.trim();
+  var resultEl = document.getElementById('banResult');
+  var btn = document.getElementById('banEmailBtn');
+  if (!email) { resultEl.innerHTML = '<span style="color:var(--error)">Введіть email</span>'; return; }
+  btn.disabled = true;
+  resultEl.innerHTML = '';
+  try {
+    var data = await API.post('/admin/users/ban-by-email', { email, reason }, true);
+    var color = data.is_blocked ? 'var(--error)' : 'var(--success)';
+    resultEl.innerHTML = '<span style="color:' + color + '"><i class="fa-solid fa-circle-check"></i> ' + esc(data.message) + '</span>';
+    document.getElementById('banEmailInput').value = '';
+    document.getElementById('banReasonInput').value = '';
+    loadUsers();
+  } catch(e) {
+    resultEl.innerHTML = '<span style="color:var(--error)"><i class="fa-solid fa-circle-xmark"></i> ' + esc(e.message) + '</span>';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function deleteUser() {
+  if (!selectedUser) return;
+  var name = esc(selectedUser.first_name + ' ' + selectedUser.last_name).trim() || esc(selectedUser.email);
+  if (!confirm('Видалити акаунт "' + name + '"? Цю дію не можна скасувати. Користувач отримає повідомлення на email.')) return;
+  try {
+    await API.delete('/admin/users/' + selectedUser.id, true);
+    showToast('Акаунт видалено', 'success');
+    closeUserModal();
+    loadUsers();
+  } catch(e) {
+    showToast(e.message, 'error');
+  }
+}
+
+async function quickBlock(id, isBlocked, btn) {
+  btn.disabled = true;
+  try {
+    await API.patch('/admin/users/' + id + '/toggle-block', {}, true);
+    showToast(isBlocked ? 'Розблоковано' : 'Заблоковано', 'success');
+    loadUsers();
+  } catch(e) {
+    showToast(e.message, 'error');
+    btn.disabled = false;
+  }
+}
+
+(function() {
+  var user = Auth.getUser();
+  if (user) {
+    document.getElementById('adminAvatarPh').textContent = (((user.first_name||'')[0]||'') + ((user.last_name||'')[0]||'')).toUpperCase();
+    document.getElementById('adminName').textContent = [user.first_name, user.last_name].filter(Boolean).join(' ');
+  }
+})();
+
+loadUsers();
+document.getElementById('sidebarOverlay').addEventListener('click', toggleSidebar);
+document.getElementById('sidebarClose').addEventListener('click', toggleSidebar);
+document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+document.getElementById('logoutBtn').addEventListener('click', function() { Auth.logout(); });
+</script>
+</body>
+</html>

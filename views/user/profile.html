@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Профіль | СпортUA</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/user.css">
+  <style>
+    /* Avatar upload */
+    .avatar-upload-wrap { position:relative; display:inline-block; cursor:pointer; }
+    .avatar-upload-wrap:hover .avatar-upload-overlay { opacity:1; }
+    .avatar-upload-overlay { position:absolute; inset:0; background:rgba(0,0,0,.55); border-radius:50%;
+      display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity .3s;
+      color:#fff; font-size:.8rem; flex-direction:column; gap:.25rem; }
+
+    /* Profile view header */
+    .profile-hero { display:flex; align-items:flex-start; gap:1.5rem; flex-wrap:wrap; }
+    .profile-hero-info { flex:1; min-width:0; }
+    .profile-display-name { font-size:1.6rem; font-weight:800; margin-bottom:.25rem; line-height:1.2; }
+    .profile-meta-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:.5rem .75rem; margin:.75rem 0; }
+    .profile-meta-item { display:flex; align-items:center; gap:.5rem; color:var(--text-muted); font-size:.875rem; }
+    .profile-meta-item i { width:16px; text-align:center; color:var(--primary); flex-shrink:0; }
+    .profile-bio { color:var(--text-muted); font-style:italic; font-size:.9rem; margin-top:.75rem; line-height:1.6; }
+
+    /* Stats row */
+    .profile-stats-row { display:flex; gap:1.5rem; flex-wrap:wrap; margin-top:1rem; padding-top:1rem; border-top:1px solid var(--border); }
+    .profile-stat { text-align:center; }
+    .profile-stat-val { font-size:1.4rem; font-weight:800; color:var(--primary); }
+    .profile-stat-lbl { font-size:.75rem; color:var(--text-muted); margin-top:.1rem; }
+
+    /* Section toggle */
+    .view-section { display:block; }
+    .edit-section  { display:none; }
+    body.edit-mode .view-section { display:none; }
+    body.edit-mode .edit-section  { display:block; }
+
+    /* Team members table */
+    .members-table { width:100%; border-collapse:collapse; font-size:.875rem; }
+    .members-table th { text-align:left; padding:.5rem .75rem; color:var(--text-muted); font-weight:600;
+      border-bottom:1px solid var(--border); }
+    .members-table td { padding:.6rem .75rem; border-bottom:1px solid rgba(255,255,255,.04); }
+    .members-table tr:last-child td { border-bottom:none; }
+    .members-table .badge { display:inline-block; padding:.2rem .55rem; border-radius:99px; font-size:.72rem; font-weight:600; }
+
+    /* Result cards */
+    .result-item { display:flex; align-items:center; gap:.75rem; padding:.75rem 0;
+      border-bottom:1px solid rgba(255,255,255,.05); }
+    .result-item:last-child { border-bottom:none; }
+    .result-place { width:40px; height:40px; border-radius:50%; display:flex; align-items:center;
+      justify-content:center; font-weight:800; font-size:.9rem; flex-shrink:0; }
+    .result-place.gold   { background:linear-gradient(135deg,#FFD700,#FFA500); color:#000; }
+    .result-place.silver { background:linear-gradient(135deg,#C0C0C0,#A9A9A9); color:#000; }
+    .result-place.bronze { background:linear-gradient(135deg,#CD7F32,#A0522D); color:#fff; }
+    .result-place.other  { background:var(--bg-card2); color:var(--text-muted); }
+    .result-info { flex:1; min-width:0; }
+    .result-event { font-weight:600; font-size:.875rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .result-discipline { font-size:.75rem; color:var(--text-muted); margin-top:.15rem; }
+    .result-value { font-size:.875rem; font-weight:700; color:var(--primary); white-space:nowrap; }
+
+    @media (max-width: 640px) {
+      .profile-hero { flex-direction:column; align-items:center; text-align:center; }
+      .profile-hero-info { width:100%; }
+      .profile-meta-grid { grid-template-columns:1fr; }
+      .profile-stats-row { justify-content:center; }
+      .profile-display-name { font-size:1.3rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+
+<nav class="navbar">
+  <div class="container">
+    <div class="navbar-inner">
+      <a href="/" class="logo"><div class="logo-icon">&#9889;</div>Спорт<span>UA</span></a>
+      <div class="nav-links">
+        <a href="/">Головна</a><a href="/events">Заходи</a><a href="/news">Новини</a><a href="/calendar">Календар</a><a href="/rankings">Рейтинг</a><a href="/gallery">Галерея</a>
+      </div>
+      <div class="nav-actions" id="navActions"></div>
+      <button class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="/">Головна</a><a href="/events">Заходи</a><a href="/news">Новини</a><a href="/calendar">Календар</a><a href="/rankings">Рейтинг</a><a href="/gallery">Галерея</a>
+    <div style="height:1px;background:var(--border);margin:.25rem 0"></div>
+    <a href="/cabinet">Дашборд</a><a href="/cabinet/profile">Профіль</a><a href="/cabinet/registrations">Реєстрації</a><a href="/cabinet/results">Результати</a><a href="/cabinet/notifications">Сповіщення</a>
+  </div>
+</nav>
+
+<div class="cabinet-mobile-nav">
+  <a href="/cabinet" class="cabinet-mobile-link"><i class="fa-solid fa-gauge"></i> Дашборд</a>
+  <a href="/cabinet/profile" class="cabinet-mobile-link active"><i class="fa-solid fa-user"></i> Профіль</a>
+  <a href="/cabinet/registrations" class="cabinet-mobile-link"><i class="fa-solid fa-list-check"></i> Реєстрації</a>
+  <a href="/cabinet/results" class="cabinet-mobile-link"><i class="fa-solid fa-medal"></i> Результати</a>
+  <a href="/cabinet/notifications" class="cabinet-mobile-link"><i class="fa-solid fa-bell"></i> Сповіщення</a>
+</div>
+
+<div class="cabinet-layout">
+  <aside class="cabinet-sidebar">
+    <div class="cabinet-user-card" id="sidebarUser">
+      <div class="cabinet-avatar-wrapper">
+        <div class="cabinet-avatar-placeholder" id="avatarPlaceholder">?</div>
+      </div>
+      <div class="cabinet-user-name" id="sidebarName">...</div>
+      <div class="cabinet-user-role" id="sidebarRole">Спортсмен</div>
+    </div>
+    <nav class="cabinet-nav">
+      <span class="cabinet-nav-section">Кабінет</span>
+      <a href="/cabinet" class="cabinet-nav-link"><span class="icon"><i class="fa-solid fa-gauge"></i></span> Дашборд</a>
+      <a href="/cabinet/profile" class="cabinet-nav-link active"><span class="icon"><i class="fa-solid fa-user"></i></span> Мій профіль</a>
+      <span class="cabinet-nav-section">Заходи</span>
+      <a href="/cabinet/registrations" class="cabinet-nav-link"><span class="icon"><i class="fa-solid fa-list-check"></i></span> Мої реєстрації</a>
+      <a href="/cabinet/results" class="cabinet-nav-link"><span class="icon"><i class="fa-solid fa-medal"></i></span> Мої результати</a>
+      <span class="cabinet-nav-section">Інше</span>
+      <a href="/cabinet/notifications" class="cabinet-nav-link"><span class="icon"><i class="fa-solid fa-bell"></i></span> Сповіщення <span class="nav-badge" id="unreadBadge" style="display:none">0</span></a>
+      <a href="/events" class="cabinet-nav-link"><span class="icon"><i class="fa-solid fa-calendar-plus"></i></span> Нові заходи</a>
+      <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
+        <button onclick="Auth.logout()" class="cabinet-nav-link" style="width:100%;background:none;border:none;cursor:pointer;text-align:left;color:var(--error)">
+          <span class="icon"><i class="fa-solid fa-right-from-bracket"></i></span> Вийти
+        </button>
+      </div>
+    </nav>
+  </aside>
+
+  <main class="cabinet-content">
+    <div class="page-title">
+      <h1>Мій профіль</h1>
+      <div class="page-title-actions">
+        <!-- View mode buttons -->
+        <div class="view-section">
+          <button class="btn btn-primary" id="editBtn" onclick="enterEditMode()">
+            <i class="fa-solid fa-pen"></i> Редагувати
+          </button>
+        </div>
+        <!-- Edit mode buttons -->
+        <div class="edit-section">
+          <div style="display:flex;gap:.5rem">
+            <button class="btn btn-ghost" onclick="exitEditMode()">
+              <i class="fa-solid fa-xmark"></i> Скасувати
+            </button>
+            <button class="btn btn-primary" form="profileForm" type="submit" id="profileSaveBtn">
+              <i class="fa-solid fa-floppy-disk"></i> Зберегти
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== VIEW MODE ===== -->
+    <div class="view-section">
+      <div class="card">
+        <div class="card-body" id="profileViewBody">
+          <div class="loader"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- Team members (only for teams) -->
+      <div class="card" id="teamMembersCard" style="margin-top:1.5rem;display:none">
+        <div class="card-header">
+          <h3><i class="fa-solid fa-users" style="color:var(--primary)"></i> Склад команди</h3>
+        </div>
+        <div class="card-body" id="teamMembersBody">
+          <div class="loader"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- Team results (only for teams) -->
+      <div class="card" id="teamResultsCard" style="margin-top:1.5rem;display:none">
+        <div class="card-header">
+          <h3><i class="fa-solid fa-medal" style="color:var(--warning)"></i> Результати команди</h3>
+        </div>
+        <div class="card-body" id="teamResultsBody">
+          <div class="loader"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== EDIT MODE ===== -->
+    <div class="edit-section">
+      <!-- Avatar upload -->
+      <div class="card">
+        <div class="card-header"><h3>Фото профілю</h3></div>
+        <div class="card-body" style="display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap">
+          <label class="avatar-upload-wrap" for="avatarInput" title="Змінити фото">
+            <img id="profileAvatar" class="profile-avatar-large" src="" alt="Аватар" style="display:none;width:80px;height:80px;border-radius:50%;object-fit:cover">
+            <div class="cabinet-avatar-placeholder avatar-xl" id="profileInitials" style="width:80px;height:80px;font-size:1.5rem;line-height:80px;text-align:center"></div>
+            <div class="avatar-upload-overlay"><i class="fa-solid fa-camera"></i><span>Змінити</span></div>
+          </label>
+          <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="uploadAvatar(this)">
+          <div>
+            <div style="font-weight:600;margin-bottom:.25rem">Завантажити нове фото</div>
+            <div style="font-size:.8rem;color:var(--text-muted)">JPG або PNG, до 5 МБ</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit form -->
+      <div class="card" style="margin-top:1.5rem">
+        <div class="card-header"><h3>Основна інформація</h3></div>
+        <div class="card-body">
+          <form id="profileForm">
+            <div id="editTeamNameGroup" class="form-group" style="display:none">
+              <label class="form-label">Назва команди <span class="required">*</span></label>
+              <input class="form-control" type="text" id="pTeamName">
+            </div>
+            <div id="editPersonNameRow" class="form-row">
+              <div class="form-group">
+                <label class="form-label">Ім'я <span class="required">*</span></label>
+                <input class="form-control" type="text" id="pFirstName" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Прізвище <span class="required">*</span></label>
+                <input class="form-control" type="text" id="pLastName" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Телефон</label>
+                <input class="form-control" type="tel" id="pPhone" placeholder="+380XXXXXXXXX">
+              </div>
+              <div class="form-group" id="editBirthGroup">
+                <label class="form-label">Дата народження</label>
+                <input class="form-control" type="date" id="pBirth">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Місто</label>
+                <input class="form-control" type="text" id="pCity" placeholder="Київ">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Країна</label>
+                <input class="form-control" type="text" id="pCountry" placeholder="Україна">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Про себе / команду</label>
+              <textarea class="form-control" id="pBio" rows="3" placeholder="Розкажіть про себе або команду..."></textarea>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Team members management (team only) -->
+      <div class="card" id="editTeamMembersCard" style="margin-top:1.5rem;display:none">
+        <div class="card-header" style="display:flex;align-items:center;justify-content:space-between">
+          <h3><i class="fa-solid fa-users" style="color:var(--primary)"></i> Склад команди</h3>
+          <button type="button" class="btn btn-primary btn-sm" onclick="showMemberForm(null)">
+            <i class="fa-solid fa-plus"></i> Додати учасника
+          </button>
+        </div>
+        <div class="card-body">
+          <div id="membersList"></div>
+          <!-- Inline add/edit form -->
+          <div id="memberFormWrap" style="display:none;margin-top:1rem;padding:1rem;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
+            <div style="font-weight:600;margin-bottom:.75rem" id="memberFormTitle">Новий учасник</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Ім'я <span class="required">*</span></label>
+                <input class="form-control" type="text" id="mFirstName" placeholder="Іван">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Прізвище <span class="required">*</span></label>
+                <input class="form-control" type="text" id="mLastName" placeholder="Коваленко">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Позиція / роль</label>
+                <input class="form-control" type="text" id="mPosition" placeholder="Нападник, воротар...">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Дата народження</label>
+                <input class="form-control" type="date" id="mBirthDate">
+              </div>
+            </div>
+            <div style="display:flex;gap:.5rem;margin-top:.5rem">
+              <button type="button" class="btn btn-ghost btn-sm" onclick="hideMemberForm()">Скасувати</button>
+              <button type="button" class="btn btn-primary btn-sm" id="mSaveBtn" onclick="saveMember()">
+                <i class="fa-solid fa-floppy-disk"></i> Зберегти
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Change password -->
+      <div class="card" style="margin-top:1.5rem">
+        <div class="card-header"><h3>Змінити пароль</h3></div>
+        <div class="card-body">
+          <form id="pwForm" style="max-width:400px">
+            <div class="form-group">
+              <label class="form-label">Поточний пароль</label>
+              <input class="form-control" type="password" id="pwCurrent" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Новий пароль</label>
+              <input class="form-control" type="password" id="pwNew" minlength="8" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Підтвердження нового пароля</label>
+              <input class="form-control" type="password" id="pwConfirm" required>
+            </div>
+            <button type="submit" class="btn btn-secondary">Змінити пароль</button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Danger zone (always visible) -->
+    <div class="card" style="margin-top:1.5rem;border-color:rgba(230,57,70,.35)">
+      <div class="card-header" style="border-bottom-color:rgba(230,57,70,.25)">
+        <h3 style="color:var(--error)"><i class="fa-solid fa-triangle-exclamation"></i> Небезпечна зона</h3>
+      </div>
+      <div class="card-body">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+          <div>
+            <div style="font-weight:600;margin-bottom:.25rem">Видалити акаунт</div>
+            <div style="font-size:.875rem;color:var(--text-muted)">Усі ваші дані будуть безповоротно видалені. Ви отримаєте підтвердження на email.</div>
+          </div>
+          <button class="btn btn-danger" onclick="openDeleteModal()">
+            <i class="fa-solid fa-trash"></i> Видалити акаунт
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Delete account modal -->
+<div id="deleteModal" class="modal-overlay" style="display:none">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <h3><i class="fa-solid fa-triangle-exclamation" style="color:var(--error)"></i> Видалення акаунту</h3>
+      <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text-muted);margin-bottom:1.25rem">Ця дія <strong style="color:var(--error)">незворотна</strong>. Усі ваші дані, реєстрації та результати будуть видалені. Введіть пароль для підтвердження.</p>
+      <div class="form-group">
+        <label class="form-label">Пароль</label>
+        <input class="form-control" type="password" id="deletePassword" placeholder="Введіть ваш пароль">
+      </div>
+      <div id="deleteError" style="color:var(--error);font-size:.875rem;margin-top:.5rem;display:none"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeDeleteModal()">Скасувати</button>
+      <button class="btn btn-danger" id="deleteConfirmBtn" onclick="confirmDeleteAccount()">
+        <i class="fa-solid fa-trash"></i> Видалити назавжди
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+if (!requireAuth()) {}
+
+var _profileData = null;
+
+/* ---- helpers ---- */
+function placeClass(p) {
+  if (p === 1) return 'gold';
+  if (p === 2) return 'silver';
+  if (p === 3) return 'bronze';
+  return 'other';
+}
+function placeLabel(p) { return p ? p + ' місце' : '—'; }
+
+/* ---- avatar upload ---- */
+async function uploadAvatar(input) {
+  if (!input.files || !input.files[0]) return;
+  var fd = new FormData();
+  fd.append('avatar', input.files[0]);
+  try {
+    var data = await API.upload('/user/profile', fd);
+    showToast('Фото оновлено!', 'success');
+    if (data.avatar) {
+      var img = document.getElementById('profileAvatar');
+      img.src = data.avatar.startsWith('/') ? data.avatar : '/uploads/' + data.avatar;
+      img.style.display = '';
+      document.getElementById('profileInitials').style.display = 'none';
+      // Also update sidebar placeholder via reload
+      setTimeout(loadProfile, 300);
+    }
+  } catch(err) {
+    showToast(err.message || 'Помилка завантаження', 'error');
+  }
+}
+
+/* ---- mode toggle ---- */
+function enterEditMode() {
+  document.body.classList.add('edit-mode');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (_profileData) fillEditForm(_profileData);
+}
+function exitEditMode() {
+  document.body.classList.remove('edit-mode');
+}
+
+/* ---- fill edit form ---- */
+function fillEditForm(u) {
+  var isTeam = u.role_name === 'team';
+  document.getElementById('editTeamNameGroup').style.display = isTeam ? '' : 'none';
+  document.getElementById('editPersonNameRow').style.display = isTeam ? 'none' : '';
+  document.getElementById('editBirthGroup').style.display = isTeam ? 'none' : '';
+
+  if (isTeam) {
+    document.getElementById('pTeamName').value = u.first_name || '';
+  } else {
+    document.getElementById('pFirstName').value = u.first_name || '';
+    document.getElementById('pLastName').value  = u.last_name  || '';
+  }
+  document.getElementById('pPhone').value   = u.phone   || '';
+  document.getElementById('pBirth').value   = u.birth_date ? u.birth_date.split('T')[0] : '';
+  document.getElementById('pCity').value    = u.city    || '';
+  document.getElementById('pCountry').value = u.country || '';
+  document.getElementById('pBio').value     = u.bio     || '';
+
+  // Avatar in edit area
+  if (u.avatar) {
+    var img = document.getElementById('profileAvatar');
+    img.src = u.avatar.startsWith('/') ? u.avatar : '/uploads/' + u.avatar;
+    img.style.display = '';
+    document.getElementById('profileInitials').style.display = 'none';
+  } else {
+    var initials = ((u.first_name||'')[0] || '').toUpperCase() + ((u.last_name||'')[0] || '').toUpperCase();
+    document.getElementById('profileInitials').textContent = initials;
+    document.getElementById('profileInitials').style.display = '';
+    document.getElementById('profileAvatar').style.display = 'none';
+  }
+}
+
+/* ---- render view ---- */
+function renderView(u) {
+  var isTeam = u.role_name === 'team';
+  var displayName = isTeam ? esc(u.first_name) : esc(u.first_name) + ' ' + esc(u.last_name);
+  var roleLabel = isTeam ? 'Команда' : (u.role_name === 'admin' ? 'Адміністратор' : 'Спортсмен');
+  var badgeClass = isTeam ? 'badge-warning' : (u.role_name === 'admin' ? 'badge-danger' : 'badge-primary');
+  var avatarHtml;
+  if (u.avatar) {
+    var src = u.avatar.startsWith('/') ? u.avatar : '/uploads/' + u.avatar;
+    avatarHtml = '<img src="' + src + '" alt="Аватар" style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid var(--primary)">';
+  } else {
+    var initials = ((u.first_name||'')[0] || '').toUpperCase() + ((u.last_name||'')[0] || '').toUpperCase();
+    avatarHtml = '<div class="cabinet-avatar-placeholder" style="width:90px;height:90px;font-size:1.5rem;line-height:90px;text-align:center">' + esc(initials) + '</div>';
+  }
+
+  var metaItems = '';
+  if (u.email)      metaItems += '<div class="profile-meta-item"><i class="fa-solid fa-envelope"></i>' + esc(u.email) + '</div>';
+  if (u.phone)      metaItems += '<div class="profile-meta-item"><i class="fa-solid fa-phone"></i>' + esc(u.phone) + '</div>';
+  if (u.city || u.country) {
+    var loc = [u.city, u.country].filter(Boolean).map(esc).join(', ');
+    metaItems += '<div class="profile-meta-item"><i class="fa-solid fa-location-dot"></i>' + loc + '</div>';
+  }
+  if (!isTeam && u.birth_date) metaItems += '<div class="profile-meta-item"><i class="fa-solid fa-cake-candles"></i>' + formatDate(u.birth_date) + '</div>';
+  if (u.created_at)  metaItems += '<div class="profile-meta-item"><i class="fa-regular fa-calendar"></i>З нами з ' + formatDate(u.created_at) + '</div>';
+
+  var statsHtml = '';
+  if (u.events_count !== undefined) statsHtml += '<div class="profile-stat"><div class="profile-stat-val">' + (u.events_count||0) + '</div><div class="profile-stat-lbl">Заходів</div></div>';
+  if (u.total_points !== undefined) statsHtml += '<div class="profile-stat"><div class="profile-stat-val">' + (u.total_points||0) + '</div><div class="profile-stat-lbl">Очок</div></div>';
+
+  document.getElementById('profileViewBody').innerHTML =
+    '<div class="profile-hero">' +
+      '<div>' + avatarHtml + '</div>' +
+      '<div class="profile-hero-info">' +
+        '<div class="profile-display-name">' + displayName + '</div>' +
+        '<span class="badge ' + badgeClass + '" style="margin-bottom:.5rem">' + roleLabel + '</span>' +
+        '<div class="profile-meta-grid">' + metaItems + '</div>' +
+        (u.bio ? '<div class="profile-bio">' + esc(u.bio) + '</div>' : '') +
+        (statsHtml ? '<div class="profile-stats-row">' + statsHtml + '</div>' : '') +
+      '</div>' +
+    '</div>';
+
+  // Sidebar
+  var sidebarInitials = ((u.first_name||'')[0] || '').toUpperCase() + ((u.last_name||'')[0] || '').toUpperCase();
+  document.getElementById('avatarPlaceholder').textContent = sidebarInitials;
+  document.getElementById('sidebarName').textContent = isTeam ? u.first_name : u.first_name + ' ' + u.last_name;
+  document.getElementById('sidebarRole').textContent = roleLabel;
+
+  // Team sections
+  if (isTeam) {
+    document.getElementById('teamMembersCard').style.display = '';
+    document.getElementById('teamResultsCard').style.display = '';
+    renderTeamMembers(u.team_members || []);
+    renderTeamResults(u.team_results || []);
+  }
+}
+
+/* ---- render team members ---- */
+function renderTeamMembers(members) {
+  var el = document.getElementById('teamMembersBody');
+  if (!members.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128101;</div><h3>Склад не вказано</h3><p>Дані про членів команди не додано</p></div>';
+    return;
+  }
+  var rows = members.map(function(m) {
+    return '<tr>' +
+      '<td>' + esc(m.first_name) + ' ' + esc(m.last_name) + '</td>' +
+      '<td>' + (m.position ? '<span class="badge badge-secondary">' + esc(m.position) + '</span>' : '<span style="color:var(--text-muted)">—</span>') + '</td>' +
+      '<td style="color:var(--text-muted)">' + (m.birth_date ? formatDate(m.birth_date) : '—') + '</td>' +
+    '</tr>';
+  }).join('');
+  el.innerHTML = '<table class="members-table"><thead><tr><th>Ім\'я</th><th>Позиція</th><th>Дата нар.</th></tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+/* ---- render team results ---- */
+function renderTeamResults(results) {
+  var el = document.getElementById('teamResultsBody');
+  if (!results.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#127942;</div><h3>Результатів немає</h3><p>Результати команди ще не зафіксовані</p></div>';
+    return;
+  }
+  var items = results.map(function(r) {
+    var pc = placeClass(r.place);
+    var resultStr = r.result_value ? esc(r.result_value) + (r.result_unit ? ' ' + esc(r.result_unit) : '') : '';
+    return '<div class="result-item">' +
+      '<div class="result-place ' + pc + '">' + (r.place || '—') + '</div>' +
+      '<div class="result-info">' +
+        '<div class="result-event">' + esc(r.event_title || '') + '</div>' +
+        '<div class="result-discipline">' + esc(r.discipline_name || '') + (r.start_date ? ' · ' + formatDate(r.start_date) : '') + '</div>' +
+      '</div>' +
+      (resultStr ? '<div class="result-value">' + resultStr + '</div>' : '') +
+    '</div>';
+  }).join('');
+  el.innerHTML = '<div>' + items + '</div>';
+}
+
+/* ---- load profile ---- */
+async function loadProfile() {
+  try {
+    var u = await API.get('/user/profile', true);
+    _profileData = u;
+    renderView(u);
+  } catch(err) {
+    showToast('Помилка завантаження профілю', 'error');
+  }
+}
+
+/* ---- profile form submit ---- */
+document.getElementById('profileForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  var btn = document.getElementById('profileSaveBtn');
+  btn.disabled = true;
+  var isTeam = _profileData && _profileData.role_name === 'team';
+  try {
+    var fd = new FormData();
+    if (isTeam) {
+      fd.append('first_name', document.getElementById('pTeamName').value.trim());
+      fd.append('last_name', '');
+    } else {
+      fd.append('first_name', document.getElementById('pFirstName').value.trim());
+      fd.append('last_name',  document.getElementById('pLastName').value.trim());
+      fd.append('birth_date', document.getElementById('pBirth').value);
+    }
+    fd.append('phone',   document.getElementById('pPhone').value.trim());
+    fd.append('city',    document.getElementById('pCity').value.trim());
+    fd.append('country', document.getElementById('pCountry').value.trim());
+    fd.append('bio',     document.getElementById('pBio').value.trim());
+
+    var headers = { 'Authorization': 'Bearer ' + Auth.getToken() };
+    var res = await fetch('/api/user/profile', { method: 'PUT', headers, body: fd });
+    var data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    var stored = Auth.getUser();
+    if (stored) {
+      stored.first_name = fd.get('first_name');
+      stored.last_name  = fd.get('last_name');
+      Auth.setSession(Auth.getToken(), stored);
+    }
+
+    showToast('Профіль оновлено!', 'success');
+    exitEditMode();
+    await loadProfile();
+  } catch(err) {
+    showToast(err.message || 'Помилка збереження', 'error');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+/* ---- password form ---- */
+document.getElementById('pwForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  var newPw = document.getElementById('pwNew').value;
+  var confirm = document.getElementById('pwConfirm').value;
+  if (newPw !== confirm) { showToast('Паролі не співпадають', 'error'); return; }
+  try {
+    await API.put('/auth/change-password', {
+      current_password: document.getElementById('pwCurrent').value,
+      new_password: newPw
+    }, true);
+    showToast('Пароль змінено!', 'success');
+    document.getElementById('pwForm').reset();
+  } catch(err) {
+    showToast(err.message || 'Помилка зміни пароля', 'error');
+  }
+});
+
+/* ---- delete account modal ---- */
+function openDeleteModal() {
+  document.getElementById('deleteModal').style.display = 'flex';
+  document.getElementById('deletePassword').value = '';
+  document.getElementById('deleteError').style.display = 'none';
+  setTimeout(function() { document.getElementById('deletePassword').focus(); }, 100);
+}
+function closeDeleteModal() {
+  document.getElementById('deleteModal').style.display = 'none';
+}
+async function confirmDeleteAccount() {
+  var pw = document.getElementById('deletePassword').value;
+  var errEl = document.getElementById('deleteError');
+  var btn = document.getElementById('deleteConfirmBtn');
+  if (!pw) { errEl.textContent = 'Введіть пароль'; errEl.style.display = ''; return; }
+  btn.disabled = true;
+  errEl.style.display = 'none';
+  try {
+    var res = await fetch('/api/user/account', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + Auth.getToken() },
+      body: JSON.stringify({ password: pw })
+    });
+    var data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    showToast('Акаунт видалено. До побачення!', 'success');
+    setTimeout(function() { Auth.logout(); }, 1500);
+  } catch(err) {
+    errEl.textContent = err.message || 'Помилка видалення';
+    errEl.style.display = '';
+    btn.disabled = false;
+  }
+}
+
+/* ---- team members management ---- */
+var _editingMemberId = null;
+var _members = [];
+
+function renderMembersList() {
+  var el = document.getElementById('membersList');
+  if (!_members.length) {
+    el.innerHTML = '<div style="color:var(--text-muted);font-size:.875rem;padding:.5rem 0">Склад порожній. Додайте учасників.</div>';
+    return;
+  }
+  el.innerHTML = '<table class="members-table"><thead><tr><th>Ім\'я</th><th>Позиція</th><th>Дата нар.</th><th></th></tr></thead><tbody>' +
+    _members.map(function(m) {
+      return '<tr>' +
+        '<td>' + esc(m.first_name) + ' ' + esc(m.last_name) + '</td>' +
+        '<td>' + (m.position ? '<span class="badge badge-secondary">' + esc(m.position) + '</span>' : '<span style="color:var(--text-muted)">—</span>') + '</td>' +
+        '<td style="color:var(--text-muted)">' + (m.birth_date ? formatDate(m.birth_date) : '—') + '</td>' +
+        '<td style="text-align:right;white-space:nowrap">' +
+          '<button type="button" class="btn btn-ghost btn-sm" style="padding:.2rem .5rem;margin-right:.25rem" onclick="showMemberForm(' + m.id + ')" title="Редагувати"><i class="fa-solid fa-pen"></i></button>' +
+          '<button type="button" class="btn btn-ghost btn-sm" style="padding:.2rem .5rem;color:var(--error)" onclick="removeMember(' + m.id + ')" title="Видалити"><i class="fa-solid fa-trash"></i></button>' +
+        '</td>' +
+      '</tr>';
+    }).join('') +
+  '</tbody></table>';
+}
+
+function showMemberForm(id) {
+  _editingMemberId = id;
+  document.getElementById('memberFormTitle').textContent = id ? 'Редагувати учасника' : 'Новий учасник';
+  if (id) {
+    var m = _members.find(function(x) { return x.id === id; });
+    if (!m) return;
+    document.getElementById('mFirstName').value = m.first_name || '';
+    document.getElementById('mLastName').value  = m.last_name  || '';
+    document.getElementById('mPosition').value  = m.position   || '';
+    document.getElementById('mBirthDate').value = m.birth_date ? m.birth_date.split('T')[0] : '';
+  } else {
+    document.getElementById('mFirstName').value = '';
+    document.getElementById('mLastName').value  = '';
+    document.getElementById('mPosition').value  = '';
+    document.getElementById('mBirthDate').value = '';
+  }
+  document.getElementById('memberFormWrap').style.display = '';
+  document.getElementById('mFirstName').focus();
+}
+
+function hideMemberForm() {
+  document.getElementById('memberFormWrap').style.display = 'none';
+  _editingMemberId = null;
+}
+
+async function saveMember() {
+  var firstName = document.getElementById('mFirstName').value.trim();
+  var lastName  = document.getElementById('mLastName').value.trim();
+  if (!firstName || !lastName) { showToast("Ім'я та прізвище обов'язкові", 'error'); return; }
+  var btn = document.getElementById('mSaveBtn');
+  btn.disabled = true;
+  try {
+    var payload = {
+      first_name: firstName,
+      last_name:  lastName,
+      position:   document.getElementById('mPosition').value.trim() || null,
+      birth_date: document.getElementById('mBirthDate').value || null
+    };
+    if (_editingMemberId) {
+      await API.put('/user/team-members/' + _editingMemberId, payload, true);
+      var idx = _members.findIndex(function(m) { return m.id === _editingMemberId; });
+      if (idx !== -1) _members[idx] = Object.assign(_members[idx], payload);
+    } else {
+      var created = await API.post('/user/team-members', payload, true);
+      _members.push(Object.assign({ id: created.id }, payload));
+    }
+    hideMemberForm();
+    renderMembersList();
+    showToast('Збережено', 'success');
+  } catch(err) {
+    showToast(err.message || 'Помилка збереження', 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function removeMember(id) {
+  if (!confirm('Видалити учасника?')) return;
+  try {
+    await API.delete('/user/team-members/' + id, true);
+    _members = _members.filter(function(m) { return m.id !== id; });
+    renderMembersList();
+    showToast('Видалено', 'success');
+  } catch(err) {
+    showToast(err.message || 'Помилка видалення', 'error');
+  }
+}
+
+/* ---- override enterEditMode to show team members card ---- */
+var _origEnterEditMode = enterEditMode;
+enterEditMode = function() {
+  _origEnterEditMode();
+  if (_profileData && _profileData.role_name === 'team') {
+    document.getElementById('editTeamMembersCard').style.display = '';
+    _members = _profileData.team_members ? JSON.parse(JSON.stringify(_profileData.team_members)) : [];
+    renderMembersList();
+  }
+};
+
+loadProfile();
+
+API.get('/user/notifications', true).then(function(d) {
+  var u = (d.notifications||d||[]).filter(function(n){return !n.is_read;}).length;
+  if (u > 0) { var b = document.getElementById('unreadBadge'); b.textContent = u; b.style.display = ''; }
+}).catch(function(){});
+</script>
+</body>
+</html>

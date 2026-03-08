@@ -1,0 +1,383 @@
+﻿<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Заходи | Адмін | СпортUA</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <a href="/" class="logo" style="font-size:1.1rem"><div class="logo-icon" style="width:28px;height:28px;font-size:.85rem">&#9889;</div>Спорт<span>UA</span></a>
+      <button id="sidebarClose" style="background:none;border:none;color:var(--text-muted);cursor:pointer">&#10005;</button>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Головне</span>
+      <a href="/admin" class="sidebar-link"><span class="icon"><i class="fa-solid fa-gauge"></i></span> Дашборд</a>
+      <a href="/admin/profile" class="sidebar-link"><span class="icon"><i class="fa-solid fa-user"></i></span> Мій профіль</a>
+      <span class="nav-section-label">Управління</span>
+      <a href="/admin/events" class="sidebar-link active"><span class="icon"><i class="fa-solid fa-trophy"></i></span> Заходи</a>
+      <a href="/admin/users" class="sidebar-link"><span class="icon"><i class="fa-solid fa-users"></i></span> Користувачі</a>
+      <a href="/admin/registrations" class="sidebar-link"><span class="icon"><i class="fa-solid fa-list-check"></i></span> Реєстрації</a>
+      <a href="/admin/results" class="sidebar-link"><span class="icon"><i class="fa-solid fa-medal"></i></span> Результати</a>
+      <span class="nav-section-label">Контент</span>
+      <a href="/admin/news" class="sidebar-link"><span class="icon"><i class="fa-solid fa-newspaper"></i></span> Новини</a>
+      <a href="/admin/media" class="sidebar-link"><span class="icon"><i class="fa-solid fa-images"></i></span> Медіа</a>
+      <span class="nav-section-label">Аналітика</span>
+      <a href="/admin/reports" class="sidebar-link"><span class="icon"><i class="fa-solid fa-chart-bar"></i></span> Звіти</a>
+      <a href="/admin/contacts" class="sidebar-link"><span class="icon"><i class="fa-solid fa-envelope"></i></span> Повідомлення</a>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <div class="cabinet-avatar-placeholder" style="width:36px;height:36px;font-size:.75rem;border:2px solid var(--primary)" id="adminAvatarPh">A</div>
+        <div class="sidebar-user-info"><div class="sidebar-user-name" id="adminName">Адмін</div><div class="sidebar-user-role">Адміністратор</div></div>
+      </div>
+      <div style="display:flex;gap:.5rem;margin-top:.75rem">
+        <a href="/" class="btn btn-ghost btn-sm" style="flex:1"><i class="fa-solid fa-globe"></i></a>
+        <button id="logoutBtn" class="btn btn-ghost btn-sm" style="flex:1;color:var(--error)"><i class="fa-solid fa-right-from-bracket"></i></button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="admin-main" id="adminMain">
+    <div class="admin-topbar">
+      <div class="topbar-left">
+        <button class="sidebar-toggle" id="sidebarToggle"><i class="fa-solid fa-bars"></i></button>
+        <div class="breadcrumb"><a href="/admin" style="color:var(--text-muted)">Адмін</a> / <span>Заходи</span></div>
+      </div>
+      <div class="topbar-right"></div>
+    </div>
+
+    <div class="admin-content">
+      <div class="page-title">
+        <h1>Управління заходами</h1>
+        <div class="page-title-actions">
+          <button class="btn btn-primary" onclick="openCreateModal()"><i class="fa-solid fa-plus"></i> Додати захід</button>
+        </div>
+      </div>
+
+      <!-- Filter & Search -->
+      <div class="data-table-header">
+        <div class="data-table-search">
+          <input type="text" id="searchInput" placeholder="Пошук заходів..." oninput="debounceSearch()">
+          <button onclick="loadEvents()"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </div>
+        <div class="table-actions">
+          <select class="form-control" id="statusFilter" onchange="loadEvents()" style="padding:.45rem .875rem;font-size:.875rem">
+            <option value="">Всі статуси</option>
+            <option value="draft">Чернетка</option>
+            <option value="upcoming">Майбутній</option>
+            <option value="registration_open">Реєстрація відкрита</option>
+            <option value="registration_closed">Закрита реєстрація</option>
+            <option value="ongoing">Відбувається</option>
+            <option value="completed">Завершено</option>
+            <option value="cancelled">Скасовано</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-wrapper" id="eventsTableWrap">
+        <div class="loader"><div class="spinner"></div></div>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Create/Edit Modal -->
+<div id="eventModal" class="modal-overlay" style="display:none">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header">
+      <h3 id="modalTitle">Новий захід</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="eventForm">
+        <input type="hidden" id="eventId">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Назва <span class="required">*</span></label>
+            <input class="form-control" type="text" id="evTitle" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Дисципліна <span class="required">*</span></label>
+            <select class="form-control" id="evDiscipline" required>
+              <option value="">Оберіть...</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Дата початку <span class="required">*</span></label>
+            <input class="form-control" type="date" id="evStartDate" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Дата закінчення</label>
+            <input class="form-control" type="date" id="evEndDate">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Місто</label>
+            <input class="form-control" type="text" id="evCity" placeholder="Київ">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Адреса</label>
+            <input class="form-control" type="text" id="evAddress" placeholder="вул. Спортивна, 1">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Макс. учасників</label>
+            <input class="form-control" type="number" id="evMaxPart" min="1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Вартість (грн)</label>
+            <input class="form-control" type="number" id="evFee" min="0" step="0.01" placeholder="0 = безкоштовно">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Статус</label>
+            <select class="form-control" id="evStatus">
+              <option value="draft">Чернетка</option>
+              <option value="upcoming">Майбутній</option>
+              <option value="registration_open">Реєстрація відкрита</option>
+              <option value="registration_closed">Реєстрація закрита</option>
+              <option value="ongoing">Відбувається</option>
+              <option value="completed">Завершено</option>
+              <option value="cancelled">Скасовано</option>
+            </select>
+          </div>
+          <div class="form-group" style="display:flex;align-items:flex-end;padding-bottom:.25rem">
+            <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.875rem">
+              <input type="checkbox" id="evFeatured" style="width:16px;height:16px;accent-color:var(--primary)">
+              Рекомендований (на головній)
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Опис</label>
+          <textarea class="form-control" id="evDesc" rows="4"></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Скасувати</button>
+      <button class="btn btn-primary" onclick="saveEvent()" id="saveEvBtn"><i class="fa-solid fa-floppy-disk"></i> Зберегти</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete confirm -->
+<div id="deleteModal" class="modal-overlay" style="display:none">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header"><h3>Підтвердження видалення</h3><button class="modal-close" onclick="closeDeleteModal()">&times;</button></div>
+    <div class="modal-body"><p>Ви впевнені, що хочете видалити цей захід? Всі пов'язані реєстрації також будуть видалені.</p></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeDeleteModal()">Скасувати</button>
+      <button class="btn btn-danger" onclick="confirmDelete()" id="confirmDelBtn"><i class="fa-solid fa-trash"></i> Видалити</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+if (!requireAdminAuth()) throw new Error('Unauthorized');
+
+var currentPage = 1;
+var deleteId = null;
+var disciplines = [];
+var locations = [];
+var searchTimer;
+
+function toggleSidebar() {
+  if (window.innerWidth > 1024) {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+    var m = document.querySelector('.admin-main');
+    if (m) m.classList.toggle('expanded');
+  } else {
+    document.getElementById('sidebar').classList.toggle('mobile-open');
+    document.getElementById('sidebarOverlay').classList.toggle('visible');
+  }
+}
+
+function debounceSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(function() { currentPage = 1; loadEvents(); }, 400);
+}
+
+function closeModal() { document.getElementById('eventModal').style.display = 'none'; }
+function closeDeleteModal() { document.getElementById('deleteModal').style.display = 'none'; deleteId = null; }
+
+async function loadMeta() {
+  var user = Auth.getUser();
+  if (user) {
+    document.getElementById('adminAvatarPh').textContent = (((user.first_name||'')[0]||'') + ((user.last_name||'')[0]||'')).toUpperCase();
+    document.getElementById('adminName').textContent = [user.first_name, user.last_name].filter(Boolean).join(' ');
+  }
+  try {
+    disciplines = await API.get('/admin/disciplines', true);
+    var sel = document.getElementById('evDiscipline');
+    sel.innerHTML = '<option value="">Оберіть...</option>';
+    disciplines.forEach(function(d) {
+      var opt = document.createElement('option');
+      opt.value = d.id;
+      opt.textContent = d.name;
+      sel.appendChild(opt);
+    });
+  } catch(e) {}
+}
+
+async function loadEvents() {
+  var search = document.getElementById('searchInput').value.trim();
+  var status = document.getElementById('statusFilter').value;
+  var wrap = document.getElementById('eventsTableWrap');
+  wrap.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+
+  try {
+    var params = '?page=' + currentPage + '&limit=15';
+    if (search) params += '&search=' + encodeURIComponent(search);
+    if (status) params += '&status=' + status;
+    var data = await API.get('/admin/events' + params, true);
+    var events = data.events || data.data || data;
+    var total = data.total || events.length;
+    var totalPages = data.totalPages || Math.ceil(total / 15);
+
+    if (!events.length) {
+      wrap.innerHTML = '<div class="empty-state" style="padding:3rem"><div class="empty-icon">&#127942;</div><h3>Заходів не знайдено</h3></div>';
+      return;
+    }
+
+    wrap.innerHTML = '<table class="table"><thead><tr>' +
+      '<th>Назва</th><th>Дисципліна</th><th>Дата</th><th>Статус</th><th>Учасників</th><th>Дії</th>' +
+    '</tr></thead><tbody>' +
+    events.map(function(e) {
+      return '<tr>' +
+        '<td><div style="font-weight:600;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(e.title) + '</div></td>' +
+        '<td>' + esc(e.discipline_name||'—') + '</td>' +
+        '<td style="white-space:nowrap">' + formatDate(e.start_date) + '</td>' +
+        '<td>' + statusBadge(e.status) + '</td>' +
+        '<td>' + (e.participants_count||0) + (e.max_participants ? ' / '+e.max_participants : '') + '</td>' +
+        '<td><div style="display:flex;gap:.4rem">' +
+          '<a href="/events/' + esc(e.slug) + '" class="btn btn-ghost btn-sm" target="_blank" title="Переглянути"><i class="fa-solid fa-eye"></i></a>' +
+          '<button class="btn btn-outline btn-sm" onclick="openEditModal(' + JSON.stringify(e).replace(/"/g,'&quot;') + ')" title="Редагувати"><i class="fa-solid fa-pen"></i></button>' +
+          '<button class="btn btn-danger btn-sm" onclick="openDeleteModal(' + e.id + ')" title="Видалити"><i class="fa-solid fa-trash"></i></button>' +
+        '</div></td>' +
+      '</tr>';
+    }).join('') + '</tbody></table>';
+
+    // Pagination
+    var pag = document.getElementById('pagination');
+    pag.innerHTML = '';
+    for (var i = 1; i <= Math.min(totalPages, 10); i++) {
+      (function(page) {
+        var btn = document.createElement('button');
+        btn.className = 'page-btn' + (page === currentPage ? ' active' : '');
+        btn.textContent = page;
+        btn.onclick = function() { currentPage = page; loadEvents(); };
+        pag.appendChild(btn);
+      })(i);
+    }
+  } catch(err) {
+    wrap.innerHTML = '<div class="empty-state" style="padding:2rem"><div class="empty-icon">&#10060;</div><h3>Помилка: ' + err.message + '</h3></div>';
+  }
+}
+
+function openCreateModal() {
+  document.getElementById('modalTitle').textContent = 'Новий захід';
+  document.getElementById('eventId').value = '';
+  document.getElementById('eventForm').reset();
+  document.getElementById('eventModal').style.display = 'flex';
+}
+
+function openEditModal(event) {
+  document.getElementById('modalTitle').textContent = 'Редагувати захід';
+  document.getElementById('eventId').value = event.id;
+  document.getElementById('evTitle').value     = event.title || '';
+  document.getElementById('evDiscipline').value = event.discipline_id || '';
+  document.getElementById('evStartDate').value  = event.start_date ? event.start_date.split('T')[0] : '';
+  document.getElementById('evEndDate').value    = event.end_date ? event.end_date.split('T')[0] : '';
+  document.getElementById('evCity').value       = event.location_city || '';
+  document.getElementById('evAddress').value    = event.location_address || '';
+  document.getElementById('evMaxPart').value    = event.max_participants || '';
+  document.getElementById('evFee').value        = event.entry_fee || '';
+  document.getElementById('evStatus').value     = event.status || 'draft';
+  document.getElementById('evFeatured').checked = !!event.is_featured;
+  document.getElementById('evDesc').value       = event.description || '';
+  document.getElementById('eventModal').style.display = 'flex';
+}
+
+function openDeleteModal(id) {
+  deleteId = id;
+  document.getElementById('deleteModal').style.display = 'flex';
+}
+
+async function confirmDelete() {
+  if (!deleteId) return;
+  var btn = document.getElementById('confirmDelBtn');
+  btn.disabled = true;
+  try {
+    await API.delete('/admin/events/' + deleteId, true);
+    showToast('Захід видалено', 'success');
+    closeDeleteModal();
+    loadEvents();
+  } catch(err) {
+    showToast(err.message, 'error');
+    btn.disabled = false;
+  }
+}
+
+async function saveEvent() {
+  var id = document.getElementById('eventId').value;
+  var btn = document.getElementById('saveEvBtn');
+  btn.disabled = true;
+
+  var body = {
+    title:           document.getElementById('evTitle').value.trim(),
+    discipline_id:   parseInt(document.getElementById('evDiscipline').value),
+    start_date:      document.getElementById('evStartDate').value,
+    end_date:        document.getElementById('evEndDate').value || null,
+    location_city:   document.getElementById('evCity').value.trim() || null,
+    location_address:document.getElementById('evAddress').value.trim() || null,
+    max_participants: parseInt(document.getElementById('evMaxPart').value) || null,
+    entry_fee:       parseFloat(document.getElementById('evFee').value) || 0,
+    status:          document.getElementById('evStatus').value,
+    is_featured:     document.getElementById('evFeatured').checked,
+    description:     document.getElementById('evDesc').value.trim() || null
+  };
+
+  try {
+    if (id) {
+      await API.put('/admin/events/' + id, body, true);
+      showToast('Захід оновлено!', 'success');
+    } else {
+      await API.post('/admin/events', body, true);
+      showToast('Захід створено!', 'success');
+    }
+    closeModal();
+    loadEvents();
+  } catch(err) {
+    showToast(err.message || 'Помилка збереження', 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+loadMeta();
+loadEvents();
+document.getElementById('sidebarOverlay').addEventListener('click', toggleSidebar);
+document.getElementById('sidebarClose').addEventListener('click', toggleSidebar);
+document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+document.getElementById('logoutBtn').addEventListener('click', function() { Auth.logout(); });
+</script>
+</body>
+</html>

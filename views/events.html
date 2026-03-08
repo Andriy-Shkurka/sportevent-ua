@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Заходи | СпортUA</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+
+<nav class="navbar">
+  <div class="container">
+    <div class="navbar-inner">
+      <a href="/" class="logo"><div class="logo-icon">&#9889;</div>Спорт<span>UA</span></a>
+      <div class="nav-links">
+        <a href="/">Головна</a><a href="/events">Заходи</a><a href="/news">Новини</a>
+        <a href="/calendar">Календар</a><a href="/rankings">Рейтинг</a><a href="/gallery">Галерея</a>
+      </div>
+      <div class="nav-actions" id="navActions"></div>
+      <button class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="/">Головна</a><a href="/events">Заходи</a><a href="/news">Новини</a><a href="/calendar">Календар</a><a href="/rankings">Рейтинг</a><a href="/gallery">Галерея</a>
+  </div>
+</nav>
+
+<!-- Page Header -->
+<div style="background:var(--bg-card);border-bottom:1px solid var(--border);padding:2.5rem 0">
+  <div class="container">
+    <span class="section-label"><i class="fa-solid fa-trophy"></i> Змагання</span>
+    <h1 style="margin:.5rem 0 .75rem">Спортивні заходи</h1>
+    <p>Знайдіть змагання за своєю дисципліною та зареєструйтесь</p>
+  </div>
+</div>
+
+<main>
+  <div class="section">
+    <div class="container">
+      <!-- Filters -->
+      <div class="filters">
+        <div class="search-box" style="flex:1;max-width:360px">
+          <input type="text" id="searchInput" placeholder="Пошук заходів..." oninput="debounceSearch()">
+          <button onclick="loadEvents()"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </div>
+        <div class="filter-group" id="disciplineFilters">
+          <button class="filter-btn active" onclick="setDiscipline('', this)">Всі</button>
+        </div>
+        <div class="filter-group">
+          <select class="form-control" id="statusFilter" onchange="loadEvents()" style="min-width:160px;padding:.4rem .875rem">
+            <option value="">Всі статуси</option>
+            <option value="upcoming">Майбутні</option>
+            <option value="registration_open">Реєстрація відкрита</option>
+            <option value="ongoing">Відбуваються</option>
+            <option value="completed">Завершені</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Events grid -->
+      <div id="eventsGrid" class="grid grid-3">
+        <div class="loader"><div class="spinner"></div></div>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-bottom">
+      <a href="/" class="logo"><div class="logo-icon">&#9889;</div>Спорт<span>UA</span></a>
+      <span>&copy; 2025 СпортUA</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/app.js"></script>
+<script>
+var currentPage = 1;
+var currentDiscipline = '';
+var searchTimer = null;
+
+function debounceSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(function() { currentPage = 1; loadEvents(); }, 400);
+}
+
+function setDiscipline(slug, el) {
+  currentDiscipline = slug;
+  currentPage = 1;
+  document.querySelectorAll('#disciplineFilters .filter-btn').forEach(function(b) { b.classList.remove('active'); });
+  el.classList.add('active');
+  loadEvents();
+}
+
+async function loadDisciplines() {
+  try {
+    var disciplines = await API.get('/disciplines');
+    var container = document.getElementById('disciplineFilters');
+    disciplines.forEach(function(d) {
+      var btn = document.createElement('button');
+      btn.className = 'filter-btn';
+      btn.textContent = d.name;
+      btn.onclick = function() { setDiscipline(d.slug, btn); };
+      container.appendChild(btn);
+    });
+  } catch(e) {}
+}
+
+async function loadEvents() {
+  var search = document.getElementById('searchInput').value.trim();
+  var status = document.getElementById('statusFilter').value;
+  var grid = document.getElementById('eventsGrid');
+  grid.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+
+  try {
+    var params = '?page=' + currentPage + '&limit=12';
+    if (search) params += '&search=' + encodeURIComponent(search);
+    if (currentDiscipline) params += '&discipline=' + encodeURIComponent(currentDiscipline);
+    if (status) params += '&status=' + encodeURIComponent(status);
+
+    var data = await API.get('/events' + params);
+    var events = data.events || data.data || data;
+    var total = data.total || events.length;
+    var totalPages = data.totalPages || Math.ceil(total / 12);
+
+    if (!events || !events.length) {
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">&#127942;</div><h3>Заходів не знайдено</h3><p>Спробуйте змінити фільтри пошуку</p></div>';
+      document.getElementById('pagination').innerHTML = '';
+      return;
+    }
+
+    grid.innerHTML = events.map(function(e) {
+      return '<a href="/events/' + e.slug + '" class="event-card" style="text-decoration:none">' +
+        '<div class="event-card-image">' +
+          (e.cover_image ? '<img src="' + e.cover_image + '" alt="' + e.title + '" loading="lazy">' : '<div class="no-image">&#127942;</div>') +
+          '<div class="event-card-badge"><span class="badge status-' + e.status + '">' + (STATUS_LABELS[e.status] || e.status) + '</span></div>' +
+        '</div>' +
+        '<div class="event-card-body">' +
+          '<div class="event-card-meta">' +
+            '<span class="badge badge-secondary">' + (e.discipline_name || '') + '</span>' +
+            (e.participants_count ? '<span class="badge badge-muted"><i class="fa-solid fa-users"></i> ' + e.participants_count + '</span>' : '') +
+          '</div>' +
+          '<h3>' + e.title + '</h3>' +
+          (e.description ? '<p style="font-size:.85rem;margin:.5rem 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">' + e.description + '</p>' : '') +
+          '<div class="event-card-info">' +
+            '<span><i class="fa-regular fa-calendar" style="color:var(--primary)"></i> ' + formatDate(e.start_date) + '</span>' +
+            '<span><i class="fa-solid fa-location-dot"></i> ' + (e.location_city || '—') + '</span>' +
+            '<span style="font-weight:700;color:var(--primary)">' + formatMoney(e.entry_fee) + '</span>' +
+          '</div>' +
+        '</div>' +
+      '</a>';
+    }).join('');
+
+    renderPagination('pagination', currentPage, totalPages, function(p) {
+      currentPage = p; loadEvents();
+    }.toString().replace('function(p) {', '').replace('}', '').trim());
+
+    // simplified pagination
+    var pag = document.getElementById('pagination');
+    pag.innerHTML = '';
+    if (totalPages > 1) {
+      for (var i = 1; i <= totalPages; i++) {
+        (function(page) {
+          var btn = document.createElement('button');
+          btn.className = 'page-btn' + (page === currentPage ? ' active' : '');
+          btn.textContent = page;
+          btn.onclick = function() { currentPage = page; loadEvents(); window.scrollTo(0,200); };
+          pag.appendChild(btn);
+        })(i);
+      }
+    }
+  } catch(err) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">&#10060;</div><h3>Помилка завантаження</h3><p>' + (err.message||'') + '</p></div>';
+  }
+}
+
+loadDisciplines();
+loadEvents();
+</script>
+</body>
+</html>

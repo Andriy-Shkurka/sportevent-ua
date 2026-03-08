@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Мої результати | СпортUA</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/user.css">
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+
+<nav class="navbar">
+  <div class="container">
+    <div class="navbar-inner">
+      <a href="/" class="logo"><div class="logo-icon">&#9889;</div>Спорт<span>UA</span></a>
+      <div class="nav-links">
+        <a href="/">Головна</a><a href="/events">Заходи</a><a href="/news">Новини</a><a href="/calendar">Календар</a><a href="/rankings">Рейтинг</a><a href="/gallery">Галерея</a>
+      </div>
+      <div class="nav-actions" id="navActions"></div>
+      <button class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="/">Головна</a><a href="/events">Заходи</a><a href="/news">Новини</a><a href="/calendar">Календар</a><a href="/rankings">Рейтинг</a><a href="/gallery">Галерея</a>
+    <div style="height:1px;background:var(--border);margin:.25rem 0"></div>
+    <a href="/cabinet">Дашборд</a><a href="/cabinet/profile">Профіль</a><a href="/cabinet/registrations">Реєстрації</a><a href="/cabinet/results">Результати</a><a href="/cabinet/notifications">Сповіщення</a>
+  </div>
+</nav>
+
+<div class="cabinet-mobile-nav">
+  <a href="/cabinet" class="cabinet-mobile-link"><i class="fa-solid fa-gauge"></i> Дашборд</a>
+  <a href="/cabinet/profile" class="cabinet-mobile-link"><i class="fa-solid fa-user"></i> Профіль</a>
+  <a href="/cabinet/registrations" class="cabinet-mobile-link"><i class="fa-solid fa-list-check"></i> Реєстрації</a>
+  <a href="/cabinet/results" class="cabinet-mobile-link active"><i class="fa-solid fa-medal"></i> Результати</a>
+  <a href="/cabinet/notifications" class="cabinet-mobile-link"><i class="fa-solid fa-bell"></i> Сповіщення</a>
+</div>
+
+<div class="cabinet-layout">
+  <aside class="cabinet-sidebar">
+    <div class="cabinet-user-card">
+      <div class="cabinet-avatar-wrapper">
+        <div class="cabinet-avatar-placeholder" id="avatarPlaceholder">?</div>
+      </div>
+      <div class="cabinet-user-name" id="sidebarName">...</div>
+      <div class="cabinet-user-role">Спортсмен</div>
+    </div>
+    <nav class="cabinet-nav">
+      <span class="cabinet-nav-section">Кабінет</span>
+      <a href="/cabinet" class="cabinet-nav-link"><span class="icon"><i class="fa-solid fa-gauge"></i></span> Дашборд</a>
+      <a href="/cabinet/profile" class="cabinet-nav-link"><span class="icon"><i class="fa-solid fa-user"></i></span> Мій профіль</a>
+      <span class="cabinet-nav-section">Заходи</span>
+      <a href="/cabinet/registrations" class="cabinet-nav-link"><span class="icon"><i class="fa-solid fa-list-check"></i></span> Мої реєстрації</a>
+      <a href="/cabinet/results" class="cabinet-nav-link active"><span class="icon"><i class="fa-solid fa-medal"></i></span> Мої результати</a>
+      <span class="cabinet-nav-section">Інше</span>
+      <a href="/cabinet/notifications" class="cabinet-nav-link"><span class="icon"><i class="fa-solid fa-bell"></i></span> Сповіщення <span class="nav-badge" id="unreadBadge" style="display:none">0</span></a>
+      <a href="/events" class="cabinet-nav-link"><span class="icon"><i class="fa-solid fa-calendar-plus"></i></span> Нові заходи</a>
+      <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
+        <button onclick="Auth.logout()" class="cabinet-nav-link" style="width:100%;background:none;border:none;cursor:pointer;text-align:left;color:var(--error)">
+          <span class="icon"><i class="fa-solid fa-right-from-bracket"></i></span> Вийти
+        </button>
+      </div>
+    </nav>
+  </aside>
+
+  <main class="cabinet-content">
+    <div class="page-title"><h1>Мої результати</h1></div>
+
+    <!-- Summary stats -->
+    <div class="user-stats-bar" id="resultStats" style="margin-bottom:2rem">
+      <div class="user-stat"><span class="user-stat-value" id="stTotal">—</span><span class="user-stat-label">Всього виступів</span></div>
+      <div class="user-stat"><span class="user-stat-value" id="stGold" style="color:#FFD700">—</span><span class="user-stat-label">Золото &#127947;</span></div>
+      <div class="user-stat"><span class="user-stat-value" id="stSilver" style="color:#C0C0C0">—</span><span class="user-stat-label">Срібло &#129352;</span></div>
+      <div class="user-stat"><span class="user-stat-value" id="stBronze" style="color:#CD7F32">—</span><span class="user-stat-label">Бронза &#129353;</span></div>
+      <div class="user-stat"><span class="user-stat-value" id="stPts" style="color:var(--primary)">—</span><span class="user-stat-label">Загальних балів</span></div>
+    </div>
+
+    <div id="resultsList">
+      <div class="loader"><div class="spinner"></div></div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+if (!requireAuth()) {}
+
+async function loadResults() {
+  var user = Auth.getUser();
+  if (user) {
+    var initials = (((user.first_name||'')[0]||'') + ((user.last_name||'')[0]||'')).toUpperCase();
+    document.getElementById('avatarPlaceholder').textContent = initials;
+    document.getElementById('sidebarName').textContent = [user.first_name, user.last_name].filter(Boolean).join(' ');
+  }
+
+  try {
+    var data = await API.get('/user/results', true);
+    var results = data.results || data || [];
+
+    var gold   = results.filter(function(r) { return r.place === 1; }).length;
+    var silver = results.filter(function(r) { return r.place === 2; }).length;
+    var bronze = results.filter(function(r) { return r.place === 3; }).length;
+    var total  = results.reduce(function(s,r) { return s + (r.points||0); }, 0);
+
+    document.getElementById('stTotal').textContent  = results.length;
+    document.getElementById('stGold').textContent   = gold;
+    document.getElementById('stSilver').textContent = silver;
+    document.getElementById('stBronze').textContent = bronze;
+    document.getElementById('stPts').textContent    = total;
+
+    var el = document.getElementById('resultsList');
+    if (!results.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#127941;</div><h3>Результатів ще немає</h3><p>Беріть участь у заходах та показуйте свої результати!</p><a href="/events" class="btn btn-primary" style="margin-top:1rem">Знайти заходи</a></div>';
+      return;
+    }
+
+    el.innerHTML = '<div style="display:flex;flex-direction:column;gap:.75rem">' + results.map(function(r) {
+      var placeClass = r.place === 1 ? 'gold' : r.place === 2 ? 'silver' : r.place === 3 ? 'bronze' : 'other';
+      return '<div class="result-card">' +
+        '<div class="result-place ' + placeClass + '">' + r.place + '</div>' +
+        '<div class="result-info">' +
+          '<div class="result-event-name">' + (r.event_title||'') + '</div>' +
+          '<div class="result-meta">' +
+            (r.discipline_name ? '<span class="badge badge-secondary">' + r.discipline_name + '</span> &nbsp; ' : '') +
+            (r.event_date ? '<i class="fa-regular fa-calendar"></i> ' + formatDate(r.event_date) : '') +
+          '</div>' +
+          (r.result_value ? '<div style="margin-top:.5rem;font-size:.85rem;color:var(--text-muted)">Результат: <strong>' + r.result_value + ' ' + (r.result_unit||'') + '</strong></div>' : '') +
+        '</div>' +
+        '<div class="result-points"><i class="fa-solid fa-star"></i> ' + (r.points||0) + '</div>' +
+        '<a href="/events/' + (r.event_slug||'') + '" class="btn btn-outline btn-sm">Захід</a>' +
+      '</div>';
+    }).join('') + '</div>';
+  } catch(err) {
+    document.getElementById('resultsList').innerHTML = '<div class="empty-state"><div class="empty-icon">&#10060;</div><h3>Помилка завантаження</h3></div>';
+  }
+}
+
+loadResults();
+
+API.get('/user/notifications', true).then(function(d) {
+  var u = (d.notifications||d||[]).filter(function(n){return !n.is_read;}).length;
+  if (u > 0) { var b = document.getElementById('unreadBadge'); b.textContent = u; b.style.display = ''; }
+}).catch(function(){});
+</script>
+</body>
+</html>

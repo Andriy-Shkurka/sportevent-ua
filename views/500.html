@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>500 — Помилка сервера | СпортUA</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    body { justify-content:center; align-items:center; }
+    .error-page { text-align:center; padding:4rem 2rem; max-width:500px; }
+    .error-code { font-size:clamp(6rem,20vw,10rem); font-weight:900; line-height:1; background:linear-gradient(135deg,var(--error),var(--primary)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  </style>
+</head>
+<body>
+<div class="error-page">
+  <div class="error-code">500</div>
+  <div style="font-size:4rem;margin-bottom:1rem">&#9889;</div>
+  <h1 style="margin-bottom:.75rem">Внутрішня помилка сервера</h1>
+  <p style="margin-bottom:2rem">Щось пішло не так на нашому сервері. Ми вже працюємо над усуненням проблеми. Спробуйте оновити сторінку або поверніться пізніше.</p>
+  <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+    <button class="btn btn-primary btn-lg" onclick="location.reload()"><i class="fa-solid fa-rotate-right"></i> Оновити</button>
+    <a href="/" class="btn btn-outline btn-lg"><i class="fa-solid fa-house"></i> На головну</a>
+  </div>
+</div>
+</body>
+</html>

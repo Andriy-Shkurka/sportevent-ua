@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Новини | СпортUA</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+
+<nav class="navbar">
+  <div class="container">
+    <div class="navbar-inner">
+      <a href="/" class="logo"><div class="logo-icon">&#9889;</div>Спорт<span>UA</span></a>
+      <div class="nav-links">
+        <a href="/">Головна</a><a href="/events">Заходи</a><a href="/news">Новини</a>
+        <a href="/calendar">Календар</a><a href="/rankings">Рейтинг</a><a href="/gallery">Галерея</a>
+      </div>
+      <div class="nav-actions" id="navActions"></div>
+      <button class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="/">Головна</a><a href="/events">Заходи</a><a href="/news">Новини</a><a href="/calendar">Календар</a><a href="/rankings">Рейтинг</a><a href="/gallery">Галерея</a>
+  </div>
+</nav>
+
+<div style="background:var(--bg-card);border-bottom:1px solid var(--border);padding:2.5rem 0">
+  <div class="container">
+    <span class="section-label"><i class="fa-solid fa-newspaper"></i> Медіа</span>
+    <h1 style="margin:.5rem 0 .75rem">Новини</h1>
+    <p>Останні новини спортивного світу та наших заходів</p>
+  </div>
+</div>
+
+<main>
+  <div class="section">
+    <div class="container">
+      <div class="filters">
+        <div class="search-box" style="flex:1;max-width:360px">
+          <input type="text" id="searchInput" placeholder="Пошук новин..." oninput="debounceSearch()">
+          <button onclick="loadNews()"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </div>
+        <div class="filter-group">
+          <button class="filter-btn active" onclick="setCategory('', this)">Всі</button>
+          <button class="filter-btn" onclick="setCategory('news', this)">Новини</button>
+          <button class="filter-btn" onclick="setCategory('announcement', this)">Анонси</button>
+          <button class="filter-btn" onclick="setCategory('blog', this)">Блог</button>
+          <button class="filter-btn" onclick="setCategory('analytics', this)">Аналітика</button>
+        </div>
+      </div>
+
+      <div id="newsGrid" class="grid grid-3">
+        <div class="loader"><div class="spinner"></div></div>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-bottom">
+      <a href="/" class="logo"><div class="logo-icon">&#9889;</div>Спорт<span>UA</span></a>
+      <span>&copy; 2025 СпортUA</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/app.js"></script>
+<script>
+var currentPage = 1;
+var currentCategory = '';
+var searchTimer = null;
+
+function debounceSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(function() { currentPage = 1; loadNews(); }, 400);
+}
+
+function setCategory(cat, el) {
+  currentCategory = cat;
+  currentPage = 1;
+  document.querySelectorAll('.filter-group .filter-btn').forEach(function(b) { b.classList.remove('active'); });
+  el.classList.add('active');
+  loadNews();
+}
+
+async function loadNews() {
+  var search = document.getElementById('searchInput').value.trim();
+  var grid = document.getElementById('newsGrid');
+  grid.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+
+  try {
+    var params = '?page=' + currentPage + '&limit=9';
+    if (search) params += '&search=' + encodeURIComponent(search);
+    if (currentCategory) params += '&category=' + encodeURIComponent(currentCategory);
+
+    var data = await API.get('/news' + params);
+    var articles = data.news || data.data || data;
+    var total = data.total || articles.length;
+    var totalPages = data.totalPages || Math.ceil(total / 9);
+
+    if (!articles || !articles.length) {
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">&#128240;</div><h3>Новин не знайдено</h3></div>';
+      document.getElementById('pagination').innerHTML = '';
+      return;
+    }
+
+    grid.innerHTML = articles.map(function(n) {
+      return '<a href="/news/' + n.slug + '" class="news-card" style="text-decoration:none">' +
+        '<div class="news-card-image">' +
+          (n.cover_image ? '<img src="' + n.cover_image + '" alt="' + n.title + '" loading="lazy">' : '<div style="height:100%;display:flex;align-items:center;justify-content:center;font-size:2.5rem;color:var(--text-muted)">&#128240;</div>') +
+        '</div>' +
+        '<div class="news-card-body">' +
+          '<div class="news-card-category">' + (NEWS_CATEGORIES[n.category] || n.category) + '</div>' +
+          '<h3>' + n.title + '</h3>' +
+          '<p>' + (n.excerpt || '') + '</p>' +
+          '<div class="news-card-footer"><span><i class="fa-regular fa-calendar"></i> ' + formatDate(n.published_at) + '</span><span style="color:var(--primary)">Читати &#8594;</span></div>' +
+        '</div>' +
+      '</a>';
+    }).join('');
+
+    // Pagination
+    var pag = document.getElementById('pagination');
+    pag.innerHTML = '';
+    if (totalPages > 1) {
+      for (var i = 1; i <= totalPages; i++) {
+        (function(page) {
+          var btn = document.createElement('button');
+          btn.className = 'page-btn' + (page === currentPage ? ' active' : '');
+          btn.textContent = page;
+          btn.onclick = function() { currentPage = page; loadNews(); window.scrollTo(0,200); };
+          pag.appendChild(btn);
+        })(i);
+      }
+    }
+  } catch(err) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">&#10060;</div><h3>Помилка завантаження</h3></div>';
+  }
+}
+
+loadNews();
+</script>
+</body>
+</html>

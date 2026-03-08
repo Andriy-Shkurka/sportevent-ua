@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>СпортUA — Вебсистема управління спортивними заходами</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Ambient background orbs -->
+<div class="bg-orb bg-orb-1" aria-hidden="true"></div>
+<div class="bg-orb bg-orb-2" aria-hidden="true"></div>
+<div class="bg-orb bg-orb-3" aria-hidden="true"></div>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="container">
+    <div class="navbar-inner">
+      <a href="/" class="logo">
+        <div class="logo-icon">&#9889;</div>
+        Спорт<span>UA</span>
+      </a>
+      <div class="nav-links" id="navLinks">
+        <a href="/">Головна</a>
+        <a href="/events">Заходи</a>
+        <a href="/news">Новини</a>
+        <a href="/calendar">Календар</a>
+        <a href="/rankings">Рейтинг</a>
+        <a href="/gallery">Галерея</a>
+      </div>
+      <div class="nav-actions" id="navActions"></div>
+      <button class="hamburger" id="hamburgerBtn" aria-label="Меню">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="/">Головна</a><a href="/events">Заходи</a><a href="/news">Новини</a><a href="/calendar">Календар</a><a href="/rankings">Рейтинг</a><a href="/gallery">Галерея</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-bg-image"></div>
+  <div class="hero-bg"></div>
+  <div class="container" style="position:relative;z-index:2">
+    <div class="hero-content">
+      <div class="hero-label">
+        <i class="fa-solid fa-bolt"></i> Офіційна платформа спортивних заходів
+      </div>
+      <h1>Спортивні заходи <span class="highlight">України</span></h1>
+      <p>Реєструйтесь на змагання, стежте за результатами та рейтингами — усе в одному місці.</p>
+      <div class="hero-actions">
+        <a href="/events" class="btn btn-primary btn-lg">
+          <i class="fa-solid fa-calendar-check"></i> Переглянути заходи
+        </a>
+        <a href="/register" class="btn btn-outline btn-lg">
+          <i class="fa-solid fa-user-plus"></i> Зареєструватись
+        </a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat-item"><span class="hero-stat-value" id="statEvents">—</span><span class="hero-stat-label">Заходів</span></div>
+        <div class="hero-stat-item"><span class="hero-stat-value" id="statAthletes">—</span><span class="hero-stat-label">Учасників</span></div>
+        <div class="hero-stat-item"><span class="hero-stat-value" id="statDisciplines">—</span><span class="hero-stat-label">Дисциплін</span></div>
+        <div class="hero-stat-item"><span class="hero-stat-value" id="statRegs">—</span><span class="hero-stat-label">Реєстрацій</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Featured Events -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-label"><i class="fa-solid fa-fire"></i> Популярні</span>
+      <h2>Найближчі заходи</h2>
+      <p>Реєструйтесь на змагання та розпочніть свій спортивний шлях</p>
+    </div>
+    <div id="featuredEventsSection">
+      <div class="loader"><div class="spinner"></div></div>
+    </div>
+    <div style="text-align:center;margin-top:2.5rem">
+      <a href="/events" class="btn btn-outline btn-lg">Всі заходи <i class="fa-solid fa-arrow-right"></i></a>
+    </div>
+  </div>
+</section>
+
+<!-- Stats -->
+<div class="stats-section" id="statsSection">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat-item"><span class="stat-number" id="s1">0</span><span class="stat-label">Спортивних заходів</span></div>
+      <div class="stat-item"><span class="stat-number" id="s2">0</span><span class="stat-label">Зареєстрованих спортсменів</span></div>
+      <div class="stat-item"><span class="stat-number" id="s3">0</span><span class="stat-label">Успішних реєстрацій</span></div>
+      <div class="stat-item"><span class="stat-number" id="s4">0</span><span class="stat-label">Активних дисциплін</span></div>
+      <div class="stat-item"><span class="stat-number" id="s5">0</span><span class="stat-label">Фото в галереї</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Latest News -->
+<section class="section" style="background:var(--bg-card);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-label"><i class="fa-solid fa-newspaper"></i> Новини</span>
+      <h2>Останні новини</h2>
+    </div>
+    <div id="latestNews" class="grid grid-3">
+      <div class="loader"><div class="spinner"></div></div>
+    </div>
+    <div style="text-align:center;margin-top:2.5rem">
+      <a href="/news" class="btn btn-outline btn-lg">Всі новини <i class="fa-solid fa-arrow-right"></i></a>
+    </div>
+  </div>
+</section>
+
+<!-- Why us -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-label"><i class="fa-solid fa-star"></i> Переваги</span>
+      <h2>Чому обирають нас</h2>
+    </div>
+    <div class="grid grid-3">
+      <div class="card"><div class="card-body" style="text-align:center;padding:2.5rem 2rem">
+        <div style="font-size:2.5rem;margin-bottom:1rem">&#127942;</div>
+        <h3 style="margin-bottom:.75rem">Офіційні заходи</h3>
+        <p>Усі змагання проводяться за офіційними правилами та стандартами федерацій.</p>
+      </div></div>
+      <div class="card"><div class="card-body" style="text-align:center;padding:2.5rem 2rem">
+        <div style="font-size:2.5rem;margin-bottom:1rem">&#9889;</div>
+        <h3 style="margin-bottom:.75rem">Швидка реєстрація</h3>
+        <p>Зареєструйтесь на захід у кілька кліків та отримайте підтвердження миттєво.</p>
+      </div></div>
+      <div class="card"><div class="card-body" style="text-align:center;padding:2.5rem 2rem">
+        <div style="font-size:2.5rem;margin-bottom:1rem">&#128202;</div>
+        <h3 style="margin-bottom:.75rem">Рейтинги та статистика</h3>
+        <p>Відстежуйте свої результати, прогрес та позицію в офіційних рейтингах.</p>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="section" style="background:linear-gradient(135deg,var(--secondary),var(--bg-card));border-top:1px solid var(--border)">
+  <div class="container" style="text-align:center">
+    <span class="section-label"><i class="fa-solid fa-rocket"></i> Приєднуйся</span>
+    <h2 style="margin-bottom:1rem">Готові розпочати?</h2>
+    <p style="max-width:500px;margin:0 auto 2rem">Приєднуйтесь до тисяч спортсменів, які вже беруть участь у наших заходах.</p>
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+      <a href="/register" class="btn btn-primary btn-lg">Зареєструватись безкоштовно</a>
+      <a href="/events" class="btn btn-outline btn-lg">Перегляд заходів</a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="/" class="logo" style="margin-bottom:.75rem">
+          <div class="logo-icon">&#9889;</div> Спорт<span>UA</span>
+        </a>
+        <p>Офіційна вебплатформа для управління спортивними заходами України.</p>
+        <div class="social-links" style="margin-top:1rem">
+          <a href="#" class="social-link"><i class="fa-brands fa-telegram"></i></a>
+          <a href="#" class="social-link"><i class="fa-brands fa-instagram"></i></a>
+          <a href="#" class="social-link"><i class="fa-brands fa-youtube"></i></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Заходи</h4>
+        <div class="footer-links">
+          <a href="/events">Всі заходи</a>
+          <a href="/calendar">Календар</a>
+          <a href="/rankings">Рейтинги</a>
+          <a href="/gallery">Галерея</a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Інформація</h4>
+        <div class="footer-links">
+          <a href="/news">Новини</a>
+          <a href="/blog">Блог</a>
+          <a href="/partners">Партнери</a>
+          <a href="/rules">Правила</a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Підтримка</h4>
+        <div class="footer-links">
+          <a href="/faq">FAQ</a>
+          <a href="/contacts">Контакти</a>
+          <a href="/login">Увійти</a>
+          <a href="/register">Реєстрація</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2025 СпортUA. Всі права захищені.</span>
+      <span>Дипломний проект</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/app.js"></script>
+<script>
+function animateCount(id, target, duration) {
+  if (!target) return;
+  const el = document.getElementById(id);
+  if (!el) return;
+  const startTime = performance.now();
+  function update(now) {
+    const progress = Math.min((now - startTime) / duration, 1);
+    const ease = 1 - Math.pow(1 - progress, 4); // easeOutQuart
+    el.textContent = Math.round(target * ease);
+    if (progress < 1) requestAnimationFrame(update);
+  }
+  requestAnimationFrame(update);
+}
+
+(async function() {
+  try {
+    const data = await API.get('/home');
+    const stats = data.stats || {};
+
+    document.getElementById('statEvents').textContent     = stats.total_events || 0;
+    document.getElementById('statAthletes').textContent   = stats.total_athletes || 0;
+    document.getElementById('statDisciplines').textContent = stats.total_disciplines || 0;
+    document.getElementById('statRegs').textContent       = stats.total_registrations || 0;
+
+    // Start counter animations when the stats section enters the viewport
+    var statTargets = {
+      s1: parseInt(stats.total_events) || 0,
+      s2: parseInt(stats.total_athletes) || 0,
+      s3: parseInt(stats.total_registrations) || 0,
+      s4: parseInt(stats.total_disciplines) || 0,
+      s5: parseInt(stats.total_photos) || 0
+    };
+    var statsSection = document.getElementById('statsSection');
+    if (statsSection && 'IntersectionObserver' in window) {
+      var obs = new IntersectionObserver(function(entries) {
+        if (entries[0].isIntersecting) {
+          obs.disconnect();
+          Object.keys(statTargets).forEach(function(id) { animateCount(id, statTargets[id], 1400); });
+        }
+      }, { threshold: 0.25 });
+      obs.observe(statsSection);
+    } else {
+      Object.keys(statTargets).forEach(function(id) { animateCount(id, statTargets[id], 1400); });
+    }
+
+    // Featured events slider
+    var evSection = document.getElementById('featuredEventsSection');
+    var evList = data.featuredEvents || [];
+    if (evList.length) {
+      function buildCardHTML(e) {
+        return '<a href="/events/' + e.slug + '" class="event-card" style="text-decoration:none">' +
+          '<div class="event-card-image">' +
+            (e.cover_image ? '<img src="' + e.cover_image + '" alt="' + esc(e.title) + '" loading="lazy" decoding="async">' : '<div class="no-image">&#127942;</div>') +
+            '<div class="event-card-badge"><span class="badge status-' + e.status + '">' + (STATUS_LABELS[e.status] || e.status) + '</span></div>' +
+          '</div>' +
+          '<div class="event-card-body">' +
+            '<div class="event-card-meta"><span class="badge badge-secondary">' + e.discipline_name + '</span></div>' +
+            '<h3>' + e.title + '</h3>' +
+            '<div class="event-card-info">' +
+              '<span><i class="fa-regular fa-calendar" style="color:var(--primary)"></i> ' + formatDate(e.start_date) + '</span>' +
+              '<span>' + (e.location_city || '—') + '</span>' +
+              '<span style="color:var(--primary);font-weight:700">' + formatMoney(e.entry_fee) + '</span>' +
+            '</div>' +
+          '</div>' +
+        '</a>';
+      }
+      evSection.innerHTML =
+        '<div class="events-slider-outer">' +
+          '<div class="events-slider-track" id="evSliderTrack">' + evList.map(buildCardHTML).join('') + '</div>' +
+          '<button class="slider-nav prev" id="sliderPrev" aria-label="Назад"><i class="fa-solid fa-chevron-left"></i></button>' +
+          '<button class="slider-nav next" id="sliderNext" aria-label="Вперед"><i class="fa-solid fa-chevron-right"></i></button>' +
+          '<div class="slider-dots" id="sliderDots"></div>' +
+        '</div>';
+
+      var sliderIdx = 0;
+      var sliderTimer = null;
+      var slTrack = document.getElementById('evSliderTrack');
+      var slPrev  = document.getElementById('sliderPrev');
+      var slNext  = document.getElementById('sliderNext');
+      var slDots  = document.getElementById('sliderDots');
+      var touchStartX = 0;
+
+      var GAP = 24; // 1.5rem gap in px
+
+      function slPerPage() {
+        if (window.innerWidth <= 600) return 1;
+        if (window.innerWidth <= 1024) return 2;
+        return 4;
+      }
+      function slMaxIdx() { return Math.max(0, evList.length - slPerPage()); }
+
+      function slCardWidth() {
+        var outer = slTrack.parentElement;
+        var pp = slPerPage();
+        return Math.floor((outer.offsetWidth - (pp - 1) * GAP) / pp);
+      }
+
+      function slSetWidths() {
+        var w = slCardWidth();
+        slTrack.querySelectorAll('.event-card').forEach(function(c) { c.style.width = w + 'px'; c.style.minWidth = w + 'px'; });
+      }
+
+      // Dots = one per slider position (maxIdx+1), not per page
+      function slInitDots() {
+        var count = slMaxIdx() + 1;
+        slDots.innerHTML = '';
+        for (var i = 0; i < count; i++) {
+          (function(pi) {
+            var d = document.createElement('button');
+            d.className = 'slider-dot';
+            d.setAttribute('aria-label', 'Слайд ' + (pi + 1));
+            d.addEventListener('click', function() { slGoTo(pi); slReset(); });
+            slDots.appendChild(d);
+          })(i);
+        }
+      }
+
+      function slUpdateDots() {
+        Array.from(slDots.querySelectorAll('.slider-dot')).forEach(function(d, i) {
+          d.classList.toggle('active', i === sliderIdx);
+        });
+      }
+
+      function slGoTo(i) {
+        slSetWidths();
+        sliderIdx = Math.max(0, Math.min(i, slMaxIdx()));
+        var step = slCardWidth() + GAP;
+        slTrack.style.transform = 'translateX(-' + (sliderIdx * step) + 'px)';
+        slUpdateDots();
+      }
+
+      function slNext2() { slGoTo(sliderIdx >= slMaxIdx() ? 0 : sliderIdx + 1); }
+      function slPrev2() { slGoTo(sliderIdx <= 0 ? slMaxIdx() : sliderIdx - 1); }
+      function slReset() { clearInterval(sliderTimer); sliderTimer = setInterval(slNext2, 5000); }
+
+      slPrev.addEventListener('click', function() { slPrev2(); slReset(); });
+      slNext.addEventListener('click', function() { slNext2(); slReset(); });
+
+      slTrack.addEventListener('touchstart', function(e) { touchStartX = e.touches[0].clientX; }, {passive: true});
+      slTrack.addEventListener('touchend', function(e) {
+        var dx = touchStartX - e.changedTouches[0].clientX;
+        if (Math.abs(dx) > 50) { dx > 0 ? slNext2() : slPrev2(); slReset(); }
+      }, {passive: true});
+
+      evSection.addEventListener('mouseenter', function() { clearInterval(sliderTimer); });
+      evSection.addEventListener('mouseleave', slReset);
+      window.addEventListener('resize', function() { slInitDots(); slGoTo(Math.min(sliderIdx, slMaxIdx())); });
+
+      slInitDots();
+      slGoTo(0);
+      slReset();
+    } else {
+      evSection.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128197;</div><h3>Заходів поки немає</h3></div>';
+    }
+
+    // Latest news
+    const newsEl = document.getElementById('latestNews');
+    const news = data.latestNews || [];
+    if (news.length) {
+      newsEl.innerHTML = news.map(function(n) {
+        return '<a href="/news/' + n.slug + '" class="news-card" style="text-decoration:none">' +
+          '<div class="news-card-image">' +
+            (n.cover_image ? '<img src="' + n.cover_image + '" alt="' + esc(n.title) + '" loading="lazy" decoding="async">' : '<div style="height:100%;display:flex;align-items:center;justify-content:center;font-size:2.5rem">&#128240;</div>') +
+          '</div>' +
+          '<div class="news-card-body">' +
+            '<div class="news-card-category">' + (NEWS_CATEGORIES[n.category] || n.category) + '</div>' +
+            '<h3>' + n.title + '</h3>' +
+            '<p>' + (n.excerpt || '') + '</p>' +
+            '<div class="news-card-footer"><span>' + formatDate(n.published_at) + '</span><span style="color:var(--primary)">Читати &#8594;</span></div>' +
+          '</div>' +
+        '</a>';
+      }).join('');
+    } else {
+      newsEl.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128240;</div><h3>Новин поки немає</h3></div>';
+    }
+  } catch(err) {
+    console.error('Home data error:', err);
+  }
+})();
+</script>
+</body>
+</html>

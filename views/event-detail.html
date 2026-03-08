@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Захід | СпортUA</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .event-hero { position:relative; height:380px; overflow:hidden; background:var(--bg-card2); display:flex; align-items:flex-end; }
+    .event-hero img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+    .event-hero-overlay { position:absolute; inset:0; background:linear-gradient(to top, rgba(13,17,23,.95) 40%, transparent); }
+    .event-hero-content { position:relative; z-index:2; padding:2rem; width:100%; }
+    .event-meta-bar { display:flex; flex-wrap:wrap; gap:1rem; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:1.25rem 1.5rem; margin-bottom:2rem; }
+    .event-meta-item { display:flex; align-items:center; gap:.5rem; font-size:.875rem; }
+    .event-meta-item strong { color:var(--text); }
+    .event-meta-item span { color:var(--text-muted); }
+    .event-tabs { display:flex; gap:.25rem; border-bottom:1px solid var(--border); margin-bottom:1.5rem; }
+    .event-tab { padding:.65rem 1.25rem; border-radius:var(--radius-sm) var(--radius-sm) 0 0; font-size:.875rem; font-weight:600; color:var(--text-muted); cursor:pointer; border:none; background:none; transition:var(--transition); border-bottom:2px solid transparent; }
+    .event-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
+    .event-tab:hover { color:var(--text); }
+    .tab-content { display:none; }
+    .tab-content.active { display:block; }
+    .register-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; position:sticky; top:80px; }
+    @media(max-width:900px){ .event-layout { flex-direction:column; } }
+  </style>
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+
+<nav class="navbar">
+  <div class="container">
+    <div class="navbar-inner">
+      <a href="/" class="logo"><div class="logo-icon">&#9889;</div>Спорт<span>UA</span></a>
+      <div class="nav-links">
+        <a href="/">Головна</a><a href="/events">Заходи</a><a href="/news">Новини</a>
+        <a href="/calendar">Календар</a><a href="/rankings">Рейтинг</a><a href="/gallery">Галерея</a>
+      </div>
+      <div class="nav-actions" id="navActions"></div>
+      <button class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="/">Головна</a><a href="/events">Заходи</a><a href="/news">Новини</a><a href="/calendar">Календар</a><a href="/rankings">Рейтинг</a><a href="/gallery">Галерея</a>
+  </div>
+</nav>
+
+<main id="mainContent">
+  <div class="loader" style="padding:6rem"><div class="spinner"></div></div>
+</main>
+
+<!-- Modal: Registration confirm -->
+<div id="regModal" style="display:none" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3><i class="fa-solid fa-user-plus"></i> Реєстрація на захід</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p id="regModalText"></p>
+      <div id="regModalAlert" class="alert alert-error mt-2 hidden"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Скасувати</button>
+      <button class="btn btn-primary" id="regConfirmBtn" onclick="confirmRegister()">
+        <i class="fa-solid fa-check"></i> Підтвердити
+      </button>
+    </div>
+  </div>
+</div>
+
+<footer class="footer" style="margin-top:4rem">
+  <div class="container">
+    <div class="footer-bottom">
+      <a href="/" class="logo"><div class="logo-icon">&#9889;</div>Спорт<span>UA</span></a>
+      <span>&copy; 2025 СпортUA</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/app.js"></script>
+<script>
+var eventData = null;
+
+function openModal() { document.getElementById('regModal').style.display = 'flex'; }
+function closeModal() { document.getElementById('regModal').style.display = 'none'; }
+
+function setActiveTab(tabId) {
+  document.querySelectorAll('.event-tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+  document.querySelector('[data-tab="' + tabId + '"]').classList.add('active');
+  document.getElementById('tab-' + tabId).classList.add('active');
+}
+
+async function confirmRegister() {
+  if (!eventData) return;
+  var btn = document.getElementById('regConfirmBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner spinner-sm" style="border-color:rgba(255,255,255,.3);border-top-color:#fff"></div>';
+  try {
+    await API.post('/user/registrations', { event_id: eventData.event.id }, true);
+    showToast('Реєстрацію подано успішно!', 'success');
+    closeModal();
+    setTimeout(function() { location.reload(); }, 800);
+  } catch(err) {
+    var alert = document.getElementById('regModalAlert');
+    alert.textContent = err.message;
+    alert.classList.remove('hidden');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Підтвердити';
+  }
+}
+
+async function withdrawRegistration(regId) {
+  if (!confirm('Ви впевнені, що хочете відкликати реєстрацію?')) return;
+  try {
+    await API.delete('/user/registrations/' + regId, true);
+    showToast('Реєстрацію відкликано', 'info');
+    setTimeout(function() { location.reload(); }, 700);
+  } catch(err) {
+    showToast(err.message, 'error');
+  }
+}
+
+function renderRegisterWidget(event, userReg) {
+  var canReg = event.status === 'registration_open';
+  var html = '<div class="register-card">';
+  html += '<h3 style="margin-bottom:1rem">Реєстрація</h3>';
+  html += '<div style="margin-bottom:1rem">';
+  html += '<span class="badge status-' + event.status + '" style="font-size:.85rem;padding:.3rem .75rem">' + (STATUS_LABELS[event.status]||event.status) + '</span>';
+  html += '</div>';
+  html += '<div style="display:flex;flex-direction:column;gap:.75rem;margin-bottom:1.5rem">';
+  html += '<div class="event-meta-item"><i class="fa-regular fa-calendar" style="color:var(--primary);width:18px"></i><span>Початок: </span><strong>' + formatDateFull(event.start_date) + '</strong></div>';
+  if (event.end_date) html += '<div class="event-meta-item"><i class="fa-regular fa-calendar-xmark" style="color:var(--text-muted);width:18px"></i><span>Кінець: </span><strong>' + formatDateFull(event.end_date) + '</strong></div>';
+  if (event.registration_deadline) html += '<div class="event-meta-item"><i class="fa-solid fa-hourglass-half" style="color:var(--warning);width:18px"></i><span>Дедлайн: </span><strong>' + formatDateFull(event.registration_deadline) + '</strong></div>';
+  html += '<div class="event-meta-item"><i class="fa-solid fa-users" style="color:var(--info);width:18px"></i><span>Учасників: </span><strong>' + (event.participants_count||0) + (event.max_participants ? ' / '+event.max_participants : '') + '</strong></div>';
+  html += '<div class="event-meta-item"><i class="fa-solid fa-tag" style="color:var(--success);width:18px"></i><span>Вартість: </span><strong>' + formatMoney(event.entry_fee) + '</strong></div>';
+  html += '</div>';
+
+  if (userReg) {
+    html += '<div class="alert alert-info" style="margin-bottom:1rem"><i class="fa-solid fa-circle-info"></i> Ваш статус: ' + (REG_STATUS_LABELS[userReg.status]||userReg.status) + '</div>';
+    if (userReg.status === 'pending' || userReg.status === 'approved') {
+      html += '<button class="btn btn-danger btn-full" onclick="withdrawRegistration(' + userReg.id + ')"><i class="fa-solid fa-xmark"></i> Відкликати реєстрацію</button>';
+    }
+  } else if (!Auth.isLoggedIn()) {
+    html += '<a href="/login" class="btn btn-primary btn-full btn-lg"><i class="fa-solid fa-right-to-bracket"></i> Увійти для реєстрації</a>';
+    html += '<p style="text-align:center;font-size:.8rem;color:var(--text-muted);margin-top:.75rem">Або <a href="/register">зареєструйтесь</a></p>';
+  } else if (canReg) {
+    html += '<button class="btn btn-primary btn-full btn-lg" onclick="openRegModal()"><i class="fa-solid fa-user-plus"></i> Зареєструватись</button>';
+  } else {
+    html += '<button class="btn btn-outline btn-full" disabled>Реєстрація недоступна</button>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function openRegModal() {
+  if (!eventData) return;
+  document.getElementById('regModalText').textContent = 'Підтвердіть реєстрацію на захід "' + eventData.event.title + '"';
+  document.getElementById('regModalAlert').classList.add('hidden');
+  openModal();
+}
+
+async function loadEvent() {
+  var slug = window.location.pathname.replace('/events/', '').replace(/\/$/, '');
+  try {
+    var data = await API.get('/events/' + slug, true);
+    eventData = data;
+    var event = data.event;
+    var participants = data.participants || [];
+    var results = data.results || [];
+    var userReg = data.userRegistration;
+
+    document.title = event.title + ' | СпортUA';
+
+    var html = '';
+    // Hero
+    html += '<div class="event-hero">';
+    if (event.cover_image) html += '<img src="' + event.cover_image + '" alt="' + event.title + '">';
+    html += '<div class="event-hero-overlay"></div>';
+    html += '<div class="event-hero-content container">';
+    html += '<div style="margin-bottom:.75rem"><a href="/events" style="color:var(--text-muted);font-size:.875rem"><i class="fa-solid fa-arrow-left"></i> Всі заходи</a></div>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.75rem"><span class="badge status-' + event.status + '">' + (STATUS_LABELS[event.status]||event.status) + '</span><span class="badge badge-secondary">' + event.discipline_name + '</span></div>';
+    html += '<h1 style="font-size:clamp(1.5rem,4vw,2.5rem);margin:0">' + event.title + '</h1>';
+    html += '</div></div>';
+
+    // Layout
+    html += '<div class="container" style="padding-top:2rem">';
+    html += '<div class="event-layout" style="display:flex;gap:2rem;align-items:flex-start">';
+    // Main
+    html += '<div style="flex:1;min-width:0">';
+    // Meta bar
+    html += '<div class="event-meta-bar">';
+    html += '<div class="event-meta-item"><i class="fa-regular fa-calendar" style="color:var(--primary)"></i><span>Дата:</span><strong>' + formatDateFull(event.start_date) + (event.end_date ? ' — '+formatDateFull(event.end_date) : '') + '</strong></div>';
+    if (event.location_city) html += '<div class="event-meta-item"><i class="fa-solid fa-location-dot" style="color:var(--error)"></i><span>Місце:</span><strong>' + event.location_city + (event.location_address ? ', '+event.location_address : '') + '</strong></div>';
+    html += '<div class="event-meta-item"><i class="fa-solid fa-users" style="color:var(--info)"></i><span>Учасників:</span><strong>' + (event.participants_count||0) + (event.max_participants ? ' / '+event.max_participants : '') + '</strong></div>';
+    html += '</div>';
+
+    // Tabs
+    html += '<div class="event-tabs">';
+    html += '<button class="event-tab active" data-tab="info" onclick="setActiveTab(\'info\')"><i class="fa-solid fa-circle-info"></i> Опис</button>';
+    html += '<button class="event-tab" data-tab="participants" onclick="setActiveTab(\'participants\')"><i class="fa-solid fa-users"></i> Учасники (' + participants.length + ')</button>';
+    html += '<button class="event-tab" data-tab="results" onclick="setActiveTab(\'results\')"><i class="fa-solid fa-medal"></i> Результати (' + results.length + ')</button>';
+    html += '</div>';
+
+    // Tab: Info
+    html += '<div id="tab-info" class="tab-content active">';
+    if (event.description) {
+      html += '<div style="line-height:1.8;color:var(--text)">' + event.description.replace(/\n/g,'<br>') + '</div>';
+    } else {
+      html += '<p>Детальна інформація відсутня.</p>';
+    }
+    if (event.rules) {
+      html += '<h4 style="margin-top:2rem;margin-bottom:.75rem">Правила участі</h4>';
+      html += '<div style="line-height:1.8">' + event.rules.replace(/\n/g,'<br>') + '</div>';
+    }
+    html += '</div>';
+
+    // Tab: Participants
+    html += '<div id="tab-participants" class="tab-content">';
+    if (participants.length) {
+      html += '<div class="table-wrapper"><table class="table"><thead><tr><th>#</th><th>Учасник</th><th>Місто</th><th>Статус</th></tr></thead><tbody>';
+      participants.forEach(function(p, i) {
+        html += '<tr><td>' + (i+1) + '</td><td>' + p.first_name + ' ' + p.last_name + '</td><td>' + (p.city||'—') + '</td><td>' + regStatusBadge(p.status) + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+    } else {
+      html += '<div class="empty-state"><div class="empty-icon">&#128100;</div><h3>Учасників ще немає</h3></div>';
+    }
+    html += '</div>';
+
+    // Tab: Results
+    html += '<div id="tab-results" class="tab-content">';
+    if (results.length) {
+      html += '<div class="table-wrapper"><table class="table"><thead><tr><th>Місце</th><th>Учасник</th><th>Результат</th><th>Бали</th></tr></thead><tbody>';
+      results.forEach(function(r) {
+        var placeClass = r.place === 1 ? 'gold' : r.place === 2 ? 'silver' : r.place === 3 ? 'bronze' : 'other';
+        html += '<tr><td><span class="result-place ' + placeClass + '" style="width:36px;height:36px;font-size:1rem">' + r.place + '</span></td>';
+        html += '<td>' + r.first_name + ' ' + r.last_name + '</td>';
+        html += '<td>' + (r.result_value || '—') + ' ' + (r.result_unit || '') + '</td>';
+        html += '<td style="color:var(--primary);font-weight:700">' + (r.points || 0) + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+    } else {
+      html += '<div class="empty-state"><div class="empty-icon">&#127941;</div><h3>Результати ще не додано</h3></div>';
+    }
+    html += '</div>';
+
+    html += '</div>'; // main
+
+    // Sidebar
+    html += '<div style="width:320px;flex-shrink:0">' + renderRegisterWidget(event, userReg) + '</div>';
+    html += '</div></div>'; // layout, container
+
+    document.getElementById('mainContent').innerHTML = html;
+  } catch(err) {
+    document.getElementById('mainContent').innerHTML = '<div class="empty-state" style="padding:6rem"><div class="empty-icon">&#10060;</div><h3>Захід не знайдено</h3><p><a href="/events">Повернутись до списку</a></p></div>';
+  }
+}
+
+loadEvent();
+</script>
+</body>
+</html>

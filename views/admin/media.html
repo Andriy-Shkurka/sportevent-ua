@@ -1,0 +1,407 @@
+﻿<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Медіа | Адмін | СпортUA</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/admin.css">
+  <link rel="stylesheet" href="/css/cropper.min.css">
+  <style>
+    .media-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:1rem; }
+    .media-item { background:var(--bg-card); border:1px solid var(--border); border-radius:10px; overflow:hidden; position:relative; cursor:pointer; transition:transform .2s,box-shadow .2s; }
+    .media-item:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,.3); }
+    .media-item img { width:100%; height:140px; object-fit:cover; display:block; }
+    .media-item-body { padding:.5rem .75rem; }
+    .media-item-name { font-size:.8rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--text-primary); font-weight:500; }
+    .media-item-meta { font-size:.72rem; color:var(--text-muted); margin-top:.15rem; }
+    .media-item-actions { position:absolute; top:.4rem; right:.4rem; display:flex; gap:.25rem; opacity:0; transition:opacity .2s; }
+    .media-item:hover .media-item-actions { opacity:1; }
+    .media-item-actions button { width:28px; height:28px; border-radius:6px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:.75rem; }
+    .upload-zone { border:2px dashed var(--border); border-radius:12px; padding:2.5rem; text-align:center; cursor:pointer; transition:all .2s; margin-bottom:1.5rem; background:var(--bg-secondary); }
+    .upload-zone:hover, .upload-zone.dragover { border-color:var(--primary); background:rgba(230,57,70,.05); }
+    .upload-zone-icon { font-size:2.5rem; color:var(--text-muted); margin-bottom:.75rem; }
+    .upload-zone p { color:var(--text-muted); font-size:.9rem; margin-bottom:.5rem; }
+    .upload-zone small { color:var(--text-muted); font-size:.8rem; }
+    .upload-progress { margin-top:1rem; display:none; }
+    .progress-bar { height:6px; background:var(--border); border-radius:3px; overflow:hidden; }
+    .progress-fill { height:100%; background:var(--primary); border-radius:3px; transition:width .3s; width:0%; }
+    .lightbox { position:fixed; inset:0; background:rgba(0,0,0,.9); z-index:9999; display:none; align-items:center; justify-content:center; }
+    .lightbox.open { display:flex; }
+    .lightbox img { max-width:90vw; max-height:90vh; border-radius:8px; object-fit:contain; }
+    .lightbox-close { position:absolute; top:1rem; right:1rem; background:rgba(255,255,255,.1); border:none; color:#fff; width:40px; height:40px; border-radius:50%; cursor:pointer; font-size:1.2rem; display:flex; align-items:center; justify-content:center; }
+    .lightbox-info { position:absolute; bottom:1rem; left:50%; transform:translateX(-50%); background:rgba(0,0,0,.6); color:#fff; padding:.5rem 1rem; border-radius:8px; font-size:.875rem; text-align:center; }
+    /* Crop modal */
+    .crop-modal { position:fixed; inset:0; background:rgba(0,0,0,.92); z-index:10000; display:none; flex-direction:column; align-items:center; justify-content:center; padding:1rem; }
+    .crop-modal.open { display:flex; }
+    .crop-container { position:relative; max-width:min(800px,90vw); max-height:60vh; width:100%; }
+    .crop-container img { display:block; max-width:100%; max-height:60vh; }
+    .crop-toolbar { display:flex; gap:.5rem; margin-top:1rem; flex-wrap:wrap; justify-content:center; }
+    .crop-toolbar button { padding:.4rem .75rem; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.08); color:#fff; border-radius:6px; cursor:pointer; font-size:.8rem; transition:background .15s; }
+    .crop-toolbar button:hover, .crop-toolbar button.active { background:var(--primary); border-color:var(--primary); }
+    .crop-actions { display:flex; gap:.75rem; margin-top:1rem; }
+    .crop-actions .btn-cancel { background:rgba(255,255,255,.1); color:#fff; border:1px solid rgba(255,255,255,.2); padding:.5rem 1.5rem; border-radius:8px; cursor:pointer; font-size:.875rem; }
+    .crop-actions .btn-save { background:var(--primary); color:#fff; border:none; padding:.5rem 1.5rem; border-radius:8px; cursor:pointer; font-size:.875rem; font-weight:600; }
+    .crop-actions .btn-save:disabled { opacity:.5; cursor:not-allowed; }
+  </style>
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">&#10005;</button>
+  <img id="lightboxImg" src="" alt="">
+  <div class="lightbox-info" id="lightboxInfo"></div>
+</div>
+
+<!-- Crop Modal -->
+<div class="crop-modal" id="cropModal">
+  <div class="crop-container">
+    <img id="cropImage" src="" alt="">
+  </div>
+  <div class="crop-toolbar">
+    <button id="ratioBtnFree" class="active" onclick="setCropRatio(NaN)">Вільно</button>
+    <button id="ratioBtn11" onclick="setCropRatio(1)">1:1</button>
+    <button id="ratioBtn169" onclick="setCropRatio(16/9)">16:9</button>
+    <button id="ratioBtn43" onclick="setCropRatio(4/3)">4:3</button>
+    <button onclick="cropperInstance && cropperInstance.rotate(-90)" title="Повернути вліво"><i class="fa-solid fa-rotate-left"></i></button>
+    <button onclick="cropperInstance && cropperInstance.rotate(90)" title="Повернути вправо"><i class="fa-solid fa-rotate-right"></i></button>
+    <button onclick="cropperInstance && cropperInstance.zoom(0.1)" title="Збільшити"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+    <button onclick="cropperInstance && cropperInstance.zoom(-0.1)" title="Зменшити"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+    <button onclick="cropperInstance && cropperInstance.reset()" title="Скинути"><i class="fa-solid fa-arrows-rotate"></i></button>
+  </div>
+  <div class="crop-actions">
+    <button class="btn-cancel" id="cropCancelBtn">Скасувати</button>
+    <button class="btn-save" id="cropSaveBtn"><i class="fa-solid fa-scissors"></i> Зберегти обрізане</button>
+  </div>
+</div>
+
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <a href="/" class="logo" style="font-size:1.1rem"><div class="logo-icon" style="width:28px;height:28px;font-size:.85rem">&#9889;</div>Спорт<span>UA</span></a>
+      <button id="sidebarClose" style="background:none;border:none;color:var(--text-muted);cursor:pointer">&#10005;</button>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Головне</span>
+      <a href="/admin" class="sidebar-link"><span class="icon"><i class="fa-solid fa-gauge"></i></span> Дашборд</a>
+      <a href="/admin/profile" class="sidebar-link"><span class="icon"><i class="fa-solid fa-user"></i></span> Мій профіль</a>
+      <span class="nav-section-label">Управління</span>
+      <a href="/admin/events" class="sidebar-link"><span class="icon"><i class="fa-solid fa-trophy"></i></span> Заходи</a>
+      <a href="/admin/users" class="sidebar-link"><span class="icon"><i class="fa-solid fa-users"></i></span> Користувачі</a>
+      <a href="/admin/registrations" class="sidebar-link"><span class="icon"><i class="fa-solid fa-list-check"></i></span> Реєстрації</a>
+      <a href="/admin/results" class="sidebar-link"><span class="icon"><i class="fa-solid fa-medal"></i></span> Результати</a>
+      <span class="nav-section-label">Контент</span>
+      <a href="/admin/news" class="sidebar-link"><span class="icon"><i class="fa-solid fa-newspaper"></i></span> Новини</a>
+      <a href="/admin/media" class="sidebar-link active"><span class="icon"><i class="fa-solid fa-images"></i></span> Медіа</a>
+      <span class="nav-section-label">Аналітика</span>
+      <a href="/admin/reports" class="sidebar-link"><span class="icon"><i class="fa-solid fa-chart-bar"></i></span> Звіти</a>
+      <a href="/admin/contacts" class="sidebar-link"><span class="icon"><i class="fa-solid fa-envelope"></i></span> Повідомлення</a>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <div class="cabinet-avatar-placeholder" style="width:36px;height:36px;font-size:.75rem;border:2px solid var(--primary)" id="adminAvatarPh">A</div>
+        <div class="sidebar-user-info"><div class="sidebar-user-name" id="adminName">Адмін</div><div class="sidebar-user-role">Адміністратор</div></div>
+      </div>
+      <div style="display:flex;gap:.5rem;margin-top:.75rem">
+        <a href="/" class="btn btn-ghost btn-sm" style="flex:1"><i class="fa-solid fa-globe"></i></a>
+        <button id="logoutBtn" class="btn btn-ghost btn-sm" style="flex:1;color:var(--error)"><i class="fa-solid fa-right-from-bracket"></i></button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="admin-main">
+    <div class="admin-topbar">
+      <div class="topbar-left">
+        <button class="sidebar-toggle" id="sidebarToggle"><i class="fa-solid fa-bars"></i></button>
+        <div class="breadcrumb"><a href="/admin" style="color:var(--text-muted)">Адмін</a> / <span>Медіа</span></div>
+      </div>
+      <div class="topbar-right">
+        <span id="mediaCount" style="color:var(--text-muted);font-size:.875rem"></span>
+      </div>
+    </div>
+
+    <div class="admin-content">
+      <div class="page-title">
+        <h1>Медіатека</h1>
+      </div>
+
+      <!-- Upload Zone -->
+      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+        <input type="file" id="fileInput" accept="image/*" multiple style="display:none" onchange="handleFiles(this.files)">
+        <div class="upload-zone-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+        <p><strong>Клікніть для завантаження</strong> або перетягніть зображення сюди</p>
+        <small>PNG, JPG, WEBP — до 10 МБ на файл</small>
+        <div class="upload-progress" id="uploadProgress">
+          <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+          <p style="margin-top:.5rem;font-size:.8rem;color:var(--text-muted)" id="progressText">Завантаження...</p>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="data-table-header" style="margin-bottom:1rem">
+        <div class="data-table-search">
+          <input type="text" id="searchInput" placeholder="Пошук за назвою..." oninput="debounceSearch()">
+          <button onclick="loadMedia()"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </div>
+        <div class="table-actions">
+          <select class="form-control" id="typeFilter" onchange="loadMedia()" style="padding:.45rem .875rem;font-size:.875rem">
+            <option value="">Всі типи</option>
+            <option value="gallery">Галерея</option>
+            <option value="event">Заходи</option>
+            <option value="news">Новини</option>
+            <option value="other">Інше</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="mediaGrid" class="media-grid">
+        <div class="loader" style="grid-column:1/-1"><div class="spinner"></div></div>
+      </div>
+      <div class="pagination" id="pagination" style="margin-top:1.5rem"></div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script src="/js/cropper.min.js"></script>
+<script>
+if (!requireAdminAuth()) throw new Error('Unauthorized');
+
+var currentPage = 1;
+var searchTimer;
+
+function toggleSidebar() {
+  if (window.innerWidth > 1024) {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+    var m = document.querySelector('.admin-main');
+    if (m) m.classList.toggle('expanded');
+  } else {
+    document.getElementById('sidebar').classList.toggle('mobile-open');
+    document.getElementById('sidebarOverlay').classList.toggle('visible');
+  }
+}
+
+function debounceSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(function() { currentPage = 1; loadMedia(); }, 400);
+}
+
+function onDragOver(e) { e.preventDefault(); document.getElementById('uploadZone').classList.add('dragover'); }
+function onDragLeave(e) { document.getElementById('uploadZone').classList.remove('dragover'); }
+function onDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.remove('dragover');
+  handleFiles(e.dataTransfer.files);
+}
+
+async function handleFiles(files) {
+  if (!files || !files.length) return;
+  var validFiles = Array.from(files).filter(function(f) { return f.type.startsWith('image/'); });
+  if (!validFiles.length) { showToast('Оберіть файли зображень', 'error'); return; }
+
+  var progress = document.getElementById('uploadProgress');
+  var fill = document.getElementById('progressFill');
+  var text = document.getElementById('progressText');
+  progress.style.display = 'block';
+
+  var uploaded = 0;
+  var errors = 0;
+  for (var i = 0; i < validFiles.length; i++) {
+    var file = validFiles[i];
+    text.textContent = 'Завантаження ' + (i+1) + ' з ' + validFiles.length + ': ' + file.name;
+    fill.style.width = Math.round(i/validFiles.length*100) + '%';
+
+    try {
+      var formData = new FormData();
+      formData.append('file', file);
+      formData.append('title', file.name.replace(/\.[^/.]+$/, ''));
+
+      var headers = { 'Authorization': 'Bearer ' + Auth.getToken() };
+      var res = await fetch('/api/admin/media', { method: 'POST', headers: headers, body: formData });
+      if (!res.ok) {
+        var errData = {};
+        try { errData = await res.json(); } catch(ignored) {}
+        showToast((errData.error || 'Помилка') + ': ' + file.name, 'error');
+        errors++;
+        continue;
+      }
+      uploaded++;
+    } catch(e) { errors++; }
+  }
+
+  fill.style.width = '100%';
+  setTimeout(function() { progress.style.display = 'none'; fill.style.width = '0%'; }, 1500);
+
+  if (uploaded > 0) showToast('Завантажено: ' + uploaded + ' фото', 'success');
+  if (errors > 0) showToast('Помилка: ' + errors + ' файлів', 'error');
+  if (uploaded > 0) { currentPage = 1; loadMedia(); }
+}
+
+function openLightbox(url, title) {
+  document.getElementById('lightboxImg').src = url;
+  document.getElementById('lightboxInfo').textContent = title || '';
+  document.getElementById('lightbox').classList.add('open');
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+  document.getElementById('lightboxImg').src = '';
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') { closeLightbox(); closeCropModal(); }
+});
+
+var cropperInstance = null;
+var cropMediaId = null;
+
+function openCropModal(id, url, e) {
+  e.stopPropagation();
+  cropMediaId = id;
+  var img = document.getElementById('cropImage');
+  img.src = url + '?v=' + Date.now();
+  document.getElementById('cropModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+  img.onload = function() {
+    cropperInstance = new Cropper(img, {
+      viewMode: 1,
+      dragMode: 'move',
+      autoCropArea: 0.9,
+      restore: false,
+      guides: true,
+      center: true,
+      highlight: false,
+      cropBoxMovable: true,
+      cropBoxResizable: true,
+      toggleDragModeOnDblclick: false,
+    });
+  };
+}
+
+function closeCropModal() {
+  document.getElementById('cropModal').classList.remove('open');
+  document.body.style.overflow = '';
+  if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+  cropMediaId = null;
+}
+
+function setCropRatio(ratio) {
+  if (!cropperInstance) return;
+  cropperInstance.setAspectRatio(ratio);
+  document.querySelectorAll('.crop-toolbar button[id^="ratioBtn"]').forEach(function(b){ b.classList.remove('active'); });
+  var active = isNaN(ratio) ? 'ratioBtnFree' : ratio===1 ? 'ratioBtn11' : ratio===(16/9) ? 'ratioBtn169' : 'ratioBtn43';
+  var el = document.getElementById(active);
+  if (el) el.classList.add('active');
+}
+
+async function saveCrop() {
+  if (!cropperInstance || !cropMediaId) return;
+  var btn = document.getElementById('cropSaveBtn');
+  btn.disabled = true;
+  btn.textContent = 'Збереження...';
+  try {
+    var d = cropperInstance.getData(true);
+    await API.post('/admin/media/' + cropMediaId + '/crop', { x: d.x, y: d.y, width: d.width, height: d.height }, true);
+    showToast('Зображення обрізано і збережено', 'success');
+    closeCropModal();
+    loadMedia();
+  } catch(err) {
+    showToast(err.message || 'Помилка збереження', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-scissors"></i> Зберегти обрізане';
+  }
+}
+
+async function deleteMedia(id, e) {
+  e.stopPropagation();
+  if (!confirm('Видалити зображення?')) return;
+  try {
+    await API.delete('/admin/media/' + id, true);
+    showToast('Видалено', 'success');
+    loadMedia();
+  } catch(err) { showToast(err.message, 'error'); }
+}
+
+async function loadMedia() {
+  var search = document.getElementById('searchInput').value.trim();
+  var type = document.getElementById('typeFilter').value;
+  var grid = document.getElementById('mediaGrid');
+  grid.innerHTML = '<div class="loader" style="grid-column:1/-1"><div class="spinner"></div></div>';
+
+  try {
+    var params = '?page=' + currentPage + '&limit=24';
+    if (search) params += '&search=' + encodeURIComponent(search);
+    if (type) params += '&type=' + type;
+
+    var data = await API.get('/admin/media' + params, true);
+    var items = data.media || data.data || data || [];
+    var total = data.total || items.length;
+    var totalPages = data.totalPages || Math.ceil(total / 24);
+
+    document.getElementById('mediaCount').textContent = total + ' файлів';
+
+    if (!items.length) {
+      grid.innerHTML = '<div class="empty-state" style="padding:3rem;grid-column:1/-1"><div class="empty-icon">&#128444;</div><h3>Медіафайлів не знайдено</h3><p>Завантажте перші зображення вище</p></div>';
+      document.getElementById('pagination').innerHTML = '';
+      return;
+    }
+
+    grid.innerHTML = items.map(function(item) {
+      var url = item.url || item.file_url || '/uploads/' + item.filename;
+      var title = item.title || item.filename || 'Зображення';
+      var size = item.file_size ? (item.file_size/1024/1024).toFixed(1) + ' МБ' : '';
+      var typeLabel = { gallery:'Галерея', event:'Захід', news:'Новини', other:'Інше' }[item.type] || item.type || '';
+      return '<div class="media-item" onclick="openLightbox(\'' + url + '\',\'' + title.replace(/'/g,'') + '\')">' +
+        '<img src="' + url + '" alt="' + title + '" loading="lazy" onerror="this.src=\'/images/placeholder.jpg\'">' +
+        '<div class="media-item-actions">' +
+          (item.file_type === 'image' ? '<button style="background:rgba(37,99,235,.85);color:#fff" onclick="openCropModal(' + item.id + ',\'' + url.replace(/'/g,'') + '\',event)" title="Обрізати"><i class="fa-solid fa-scissors"></i></button>' : '') +
+          '<button style="background:rgba(230,57,70,.85);color:#fff" onclick="deleteMedia(' + item.id + ',event)" title="Видалити"><i class="fa-solid fa-trash"></i></button>' +
+        '</div>' +
+        '<div class="media-item-body">' +
+          '<div class="media-item-name" title="' + title + '">' + title + '</div>' +
+          '<div class="media-item-meta">' + [typeLabel, size].filter(Boolean).join(' · ') + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    var pag = document.getElementById('pagination');
+    pag.innerHTML = '';
+    for (var i = 1; i <= Math.min(totalPages, 10); i++) {
+      (function(page) {
+        var btn = document.createElement('button');
+        btn.className = 'page-btn' + (page === currentPage ? ' active' : '');
+        btn.textContent = page;
+        btn.onclick = function() { currentPage = page; loadMedia(); };
+        pag.appendChild(btn);
+      })(i);
+    }
+  } catch(err) {
+    grid.innerHTML = '<div class="empty-state" style="padding:2rem;grid-column:1/-1"><div class="empty-icon">&#10060;</div><h3>Помилка завантаження</h3></div>';
+  }
+}
+
+(function() {
+  var user = Auth.getUser();
+  if (user) {
+    document.getElementById('adminAvatarPh').textContent = (((user.first_name||'')[0]||'') + ((user.last_name||'')[0]||'')).toUpperCase();
+    document.getElementById('adminName').textContent = [user.first_name, user.last_name].filter(Boolean).join(' ');
+  }
+})();
+
+loadMedia();
+document.getElementById('cropCancelBtn').addEventListener('click', closeCropModal);
+document.getElementById('cropSaveBtn').addEventListener('click', saveCrop);
+document.getElementById('sidebarOverlay').addEventListener('click', toggleSidebar);
+document.getElementById('sidebarClose').addEventListener('click', toggleSidebar);
+document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+document.getElementById('logoutBtn').addEventListener('click', function() { Auth.logout(); });
+</script>
+</body>
+</html>

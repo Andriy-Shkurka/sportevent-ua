@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Uploads (user-uploaded files — not committed)
+public/images/uploads/*
+!public/images/uploads/.gitkeep
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Dev tools
+.claude/
+img_test/
+
+# Backup
+Диплом_backup_*/
+
+# Seed / debug scripts
+seed_test.js
+seed_ids.json
+fix_toggle_sidebar.js
+
+# CSS backups
+public/css/*.backup.css
+public/css/style_backup.css
+public/css/user.backup.css

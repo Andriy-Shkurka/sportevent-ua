@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Рейтинги | СпортUA</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .rank-num { font-size:1.1rem; font-weight:900; width:36px; text-align:center; }
+    .rank-1 { color:#FFD700; } .rank-2 { color:#C0C0C0; } .rank-3 { color:#CD7F32; }
+    .rank-medal { font-size:1.3rem; }
+    .avatar-initials { width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));display:inline-flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#fff;flex-shrink:0; }
+  </style>
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+
+<nav class="navbar">
+  <div class="container">
+    <div class="navbar-inner">
+      <a href="/" class="logo"><div class="logo-icon">&#9889;</div>Спорт<span>UA</span></a>
+      <div class="nav-links">
+        <a href="/">Головна</a><a href="/events">Заходи</a><a href="/news">Новини</a>
+        <a href="/calendar">Календар</a><a href="/rankings">Рейтинг</a><a href="/gallery">Галерея</a>
+      </div>
+      <div class="nav-actions" id="navActions"></div>
+      <button class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="/">Головна</a><a href="/events">Заходи</a><a href="/news">Новини</a><a href="/calendar">Календар</a><a href="/rankings">Рейтинг</a><a href="/gallery">Галерея</a>
+  </div>
+</nav>
+
+<div style="background:var(--bg-card);border-bottom:1px solid var(--border);padding:2.5rem 0">
+  <div class="container">
+    <span class="section-label"><i class="fa-solid fa-ranking-star"></i> Змагання</span>
+    <h1 style="margin:.5rem 0 .75rem">Рейтинги спортсменів</h1>
+    <p>Офіційні рейтинги за дисциплінами та сезонами</p>
+  </div>
+</div>
+
+<main>
+  <div class="section">
+    <div class="container">
+      <div class="filters" style="margin-bottom:1.25rem">
+        <div class="filter-group">
+          <select class="form-control" id="disciplineFilter" onchange="loadRankings()" style="min-width:180px">
+            <option value="">Всі дисципліни</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <select class="form-control" id="yearFilter" onchange="loadRankings()" style="min-width:120px">
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:.5rem;margin-bottom:1.5rem" id="roleFilterWrap">
+        <button class="btn btn-primary btn-sm" onclick="setRoleFilter('all')"      id="rf-all"      style="border-radius:20px">Всі</button>
+        <button class="btn btn-ghost  btn-sm" onclick="setRoleFilter('athlete')"   id="rf-athlete"  style="border-radius:20px"><i class="fa-solid fa-person-running"></i> Спортсмени</button>
+        <button class="btn btn-ghost  btn-sm" onclick="setRoleFilter('team')"      id="rf-team"     style="border-radius:20px"><i class="fa-solid fa-users"></i> Команди</button>
+      </div>
+
+      <div id="rankingsContent">
+        <div class="loader"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-bottom">
+      <a href="/" class="logo"><div class="logo-icon">&#9889;</div>Спорт<span>UA</span></a>
+      <span>&copy; 2025 СпортUA</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/app.js"></script>
+<script>
+// Populate year filter
+var yearSel = document.getElementById('yearFilter');
+var curYear = new Date().getFullYear();
+for (var y = curYear; y >= curYear - 5; y--) {
+  var opt = document.createElement('option');
+  opt.value = y; opt.textContent = y + ' рік';
+  if (y === curYear) opt.selected = true;
+  yearSel.appendChild(opt);
+}
+
+var _rankingsData = [];
+var _roleFilter = 'all';
+
+function setRoleFilter(role) {
+  _roleFilter = role;
+  ['all','athlete','team'].forEach(function(k) {
+    var btn = document.getElementById('rf-' + k);
+    btn.className = k === role ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm';
+    btn.style.borderRadius = '20px';
+  });
+  renderRankings(_rankingsData);
+}
+
+function renderRankings(data) {
+  var content = document.getElementById('rankingsContent');
+  var filtered = _roleFilter === 'all' ? data : data.filter(function(r) { return r.role_name === _roleFilter; });
+
+  if (!filtered.length) {
+    content.innerHTML = '<div class="empty-state"><div class="empty-icon">&#127941;</div><h3>Рейтинг порожній</h3><p>Дані за обраний сезон відсутні</p></div>';
+    return;
+  }
+
+  var html = '<div class="table-wrapper"><table class="table"><thead><tr>';
+  html += '<th style="width:60px">Місце</th><th>Учасник</th><th>Команда</th><th>Дисципліна</th><th>Місто</th><th>Змагань</th><th style="text-align:right">Бали</th>';
+  html += '</tr></thead><tbody>';
+
+  var pos = 0;
+  filtered.forEach(function(r) {
+    pos++;
+    var medal = pos === 1 ? '&#127947;' : pos === 2 ? '&#129352;' : pos === 3 ? '&#129353;' : '';
+    var rankClass = pos <= 3 ? 'rank-' + pos : '';
+    var isTeam = r.role_name === 'team';
+    var initials = (((r.first_name||'')[0]||'') + ((r.last_name||'')[0]||'')).toUpperCase();
+    var teamBadge = isTeam
+      ? '<span style="display:inline-flex;align-items:center;gap:.25rem;background:color-mix(in oklch,var(--secondary-light,#38BDF8) 15%,transparent);color:var(--secondary-light,#38BDF8);font-size:.65rem;font-weight:700;padding:.15rem .45rem;border-radius:4px;border:1px solid color-mix(in oklch,var(--secondary-light,#38BDF8) 30%,transparent);white-space:nowrap"><i class="fa-solid fa-users" style="font-size:.6rem"></i> Команда</span>'
+      : '';
+    // Team column: athlete's team_name from registration, or "—" for team accounts
+    var teamCell = isTeam ? '—' : (r.team_name || '—');
+    html += '<tr>';
+    html += '<td><div style="display:flex;align-items:center;gap:.25rem"><span class="rank-num ' + rankClass + '">' + pos + '</span>' + (medal ? '<span class="rank-medal">' + medal + '</span>' : '') + '</div></td>';
+    html += '<td><div style="display:flex;align-items:center;gap:.75rem"><div class="avatar-initials">' + initials + '</div><div style="display:flex;align-items:center;gap:.5rem"><span style="font-weight:600">' + r.first_name + ' ' + r.last_name + '</span>' + teamBadge + '</div></div></td>';
+    html += '<td style="color:var(--text-muted);font-size:.875rem">' + teamCell + '</td>';
+    html += '<td>' + (r.discipline_name||'—') + '</td>';
+    html += '<td>' + (r.city||'—') + '</td>';
+    html += '<td>' + (r.events_count||0) + '</td>';
+    html += '<td style="text-align:right;font-size:1.1rem;font-weight:900;color:var(--primary)">' + (r.total_points||0) + '</td>';
+    html += '</tr>';
+  });
+
+  html += '</tbody></table></div>';
+  content.innerHTML = html;
+}
+
+async function loadDisciplines() {
+  try {
+    var disciplines = await API.get('/disciplines');
+    var sel = document.getElementById('disciplineFilter');
+    disciplines.forEach(function(d) {
+      var opt = document.createElement('option');
+      opt.value = d.slug; opt.textContent = d.name;
+      sel.appendChild(opt);
+    });
+  } catch(e) {}
+}
+
+async function loadRankings() {
+  var discipline = document.getElementById('disciplineFilter').value;
+  var year = document.getElementById('yearFilter').value;
+  var content = document.getElementById('rankingsContent');
+  content.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+
+  try {
+    var params = '?year=' + year + '&limit=50';
+    if (discipline) params += '&discipline=' + encodeURIComponent(discipline);
+    _rankingsData = await API.get('/rankings' + params);
+    if (!_rankingsData || !_rankingsData.length) {
+      content.innerHTML = '<div class="empty-state"><div class="empty-icon">&#127941;</div><h3>Рейтинг порожній</h3><p>Дані за обраний сезон відсутні</p></div>';
+      return;
+    }
+    renderRankings(_rankingsData);
+  } catch(err) {
+    content.innerHTML = '<div class="empty-state"><div class="empty-icon">&#10060;</div><h3>Помилка завантаження</h3></div>';
+  }
+}
+
+loadDisciplines();
+loadRankings();
+</script>
+</body>
+</html>

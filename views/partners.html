@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Партнери | СпортUA</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .partner-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:2rem; text-align:center; transition:var(--transition); display:flex; flex-direction:column; align-items:center; gap:1rem; }
+    .partner-card:hover { border-color:var(--primary); transform:translateY(-4px); box-shadow:var(--shadow); }
+    .partner-logo { width:80px; height:80px; object-fit:contain; border-radius:var(--radius-sm); }
+    .partner-logo-placeholder { width:80px; height:80px; border-radius:var(--radius-sm); background:var(--bg-card2); display:flex; align-items:center; justify-content:center; font-size:2rem; }
+  </style>
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+
+<nav class="navbar">
+  <div class="container">
+    <div class="navbar-inner">
+      <a href="/" class="logo"><div class="logo-icon">&#9889;</div>Спорт<span>UA</span></a>
+      <div class="nav-links">
+        <a href="/">Головна</a><a href="/events">Заходи</a><a href="/news">Новини</a>
+        <a href="/calendar">Календар</a><a href="/rankings">Рейтинг</a><a href="/gallery">Галерея</a>
+      </div>
+      <div class="nav-actions" id="navActions"></div>
+      <button class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="/">Головна</a><a href="/events">Заходи</a><a href="/news">Новини</a><a href="/calendar">Календар</a><a href="/rankings">Рейтинг</a><a href="/gallery">Галерея</a>
+  </div>
+</nav>
+
+<div style="background:var(--bg-card);border-bottom:1px solid var(--border);padding:2.5rem 0">
+  <div class="container">
+    <span class="section-label"><i class="fa-solid fa-handshake"></i> Співпраця</span>
+    <h1 style="margin:.5rem 0 .75rem">Наші партнери</h1>
+    <p>Організації та компанії, що підтримують розвиток спорту в Україні</p>
+  </div>
+</div>
+
+<main>
+  <div class="section">
+    <div class="container">
+      <div id="partnersGrid" class="grid grid-4">
+        <div class="loader"><div class="spinner"></div></div>
+      </div>
+
+      <!-- Become a partner CTA -->
+      <div class="card" style="margin-top:4rem;max-width:600px;margin-left:auto;margin-right:auto">
+        <div class="card-body" style="text-align:center;padding:3rem 2rem">
+          <div style="font-size:2.5rem;margin-bottom:1rem">&#129309;</div>
+          <h2 style="margin-bottom:.75rem">Стати партнером</h2>
+          <p style="margin-bottom:1.5rem">Підтримайте розвиток спорту в Україні. Ми раді співпраці з організаціями, які поділяють наші цінності.</p>
+          <a href="/contacts" class="btn btn-primary btn-lg"><i class="fa-solid fa-envelope"></i> Написати нам</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-bottom">
+      <a href="/" class="logo"><div class="logo-icon">&#9889;</div>Спорт<span>UA</span></a>
+      <span>&copy; 2025 СпортUA</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/app.js"></script>
+<script>
+var staticPartners = [
+  { name: 'Міністерство молоді та спорту', type: 'Державний орган', description: 'Офіційний партнер у сфері державного управління спортом', website: '#' },
+  { name: 'Олімпійський комітет України', type: 'Спортивна організація', description: 'Підтримка та розвиток олімпійського руху в Україні', website: '#' },
+  { name: 'Федерація легкої атлетики', type: 'Спортивна федерація', description: 'Офіційна федерація з легкої атлетики', website: '#' },
+  { name: 'СпортМед Україна', type: 'Медична підтримка', description: 'Медичне забезпечення спортивних заходів', website: '#' },
+];
+
+async function loadPartners() {
+  var grid = document.getElementById('partnersGrid');
+  var partners = [];
+  try {
+    var data = await API.get('/partners');
+    partners = data && data.length ? data : staticPartners;
+  } catch(e) {
+    partners = staticPartners;
+  }
+
+  if (!partners.length) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">&#129309;</div><h3>Партнерів поки немає</h3></div>';
+    return;
+  }
+
+  grid.innerHTML = partners.map(function(p) {
+    return '<div class="partner-card">' +
+      (p.logo ? '<img class="partner-logo" src="/uploads/' + p.logo + '" alt="' + p.name + '">' : '<div class="partner-logo-placeholder">&#127970;</div>') +
+      '<div style="font-weight:700;font-size:.95rem">' + p.name + '</div>' +
+      (p.type || p.partner_type ? '<div style="font-size:.75rem;color:var(--primary);font-weight:600;text-transform:uppercase;letter-spacing:.05em">' + (p.type||p.partner_type) + '</div>' : '') +
+      (p.description ? '<div style="font-size:.825rem;color:var(--text-muted);text-align:center">' + p.description + '</div>' : '') +
+      (p.website && p.website !== '#' ? '<a href="' + p.website + '" target="_blank" rel="noopener" class="btn btn-outline btn-sm" style="margin-top:.25rem">Сайт <i class="fa-solid fa-arrow-up-right-from-square"></i></a>' : '') +
+    '</div>';
+  }).join('');
+}
+
+loadPartners();
+</script>
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Контакти | СпортUA</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+
+<nav class="navbar">
+  <div class="container">
+    <div class="navbar-inner">
+      <a href="/" class="logo"><div class="logo-icon">&#9889;</div>Спорт<span>UA</span></a>
+      <div class="nav-links">
+        <a href="/">Головна</a><a href="/events">Заходи</a><a href="/news">Новини</a>
+        <a href="/calendar">Календар</a><a href="/rankings">Рейтинг</a><a href="/gallery">Галерея</a>
+      </div>
+      <div class="nav-actions" id="navActions"></div>
+      <button class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="/">Головна</a><a href="/events">Заходи</a><a href="/news">Новини</a><a href="/calendar">Календар</a><a href="/rankings">Рейтинг</a><a href="/gallery">Галерея</a>
+  </div>
+</nav>
+
+<div style="background:var(--bg-card);border-bottom:1px solid var(--border);padding:2.5rem 0">
+  <div class="container">
+    <span class="section-label"><i class="fa-solid fa-envelope"></i> Зв'язок</span>
+    <h1 style="margin:.5rem 0 .75rem">Контакти</h1>
+    <p>Зв'яжіться з нами з будь-яких питань</p>
+  </div>
+</div>
+
+<main>
+  <div class="section">
+    <div class="container">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:start">
+
+        <!-- Contact form -->
+        <div>
+          <h2 style="margin-bottom:1.5rem">Написати нам</h2>
+          <div id="successMsg" class="alert alert-success mb-3 hidden">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>Повідомлення відправлено! Ми зв'яжемося з вами найближчим часом.</span>
+          </div>
+          <form id="contactForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Ім'я <span class="required">*</span></label>
+                <input class="form-control" type="text" id="cName" placeholder="Іван Петренко" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email <span class="required">*</span></label>
+                <input class="form-control" type="email" id="cEmail" placeholder="email@example.com" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Телефон</label>
+              <input class="form-control" type="tel" id="cPhone" placeholder="+380XXXXXXXXX">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Тема</label>
+              <select class="form-control" id="cSubject">
+                <option value="">Оберіть тему</option>
+                <option>Реєстрація на захід</option>
+                <option>Технічна підтримка</option>
+                <option>Організація заходу</option>
+                <option>Партнерство</option>
+                <option>Інше</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Повідомлення <span class="required">*</span></label>
+              <textarea class="form-control" id="cMessage" rows="5" placeholder="Ваше повідомлення..." required style="min-height:140px"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg" id="contactSubmitBtn">
+              <i class="fa-solid fa-paper-plane"></i> Надіслати
+            </button>
+          </form>
+        </div>
+
+        <!-- Contact info -->
+        <div>
+          <h2 style="margin-bottom:1.5rem">Наші контакти</h2>
+          <div style="display:flex;flex-direction:column;gap:1.25rem;margin-bottom:2rem">
+            <div style="display:flex;gap:1rem;align-items:flex-start">
+              <div style="width:44px;height:44px;border-radius:var(--radius-sm);background:rgba(230,57,70,.1);display:flex;align-items:center;justify-content:center;color:var(--primary);flex-shrink:0"><i class="fa-solid fa-location-dot"></i></div>
+              <div><div style="font-weight:700;margin-bottom:.25rem">Адреса</div><div style="color:var(--text-muted);font-size:.9rem">м. Київ, вул. Спортивна, 1<br>04073, Україна</div></div>
+            </div>
+            <div style="display:flex;gap:1rem;align-items:flex-start">
+              <div style="width:44px;height:44px;border-radius:var(--radius-sm);background:rgba(88,166,255,.1);display:flex;align-items:center;justify-content:center;color:var(--info);flex-shrink:0"><i class="fa-solid fa-phone"></i></div>
+              <div><div style="font-weight:700;margin-bottom:.25rem">Телефон</div><div style="color:var(--text-muted);font-size:.9rem">+380 (44) 123-45-67<br>Пн-Пт: 9:00 — 18:00</div></div>
+            </div>
+            <div style="display:flex;gap:1rem;align-items:flex-start">
+              <div style="width:44px;height:44px;border-radius:var(--radius-sm);background:rgba(63,185,80,.1);display:flex;align-items:center;justify-content:center;color:var(--success);flex-shrink:0"><i class="fa-solid fa-envelope"></i></div>
+              <div><div style="font-weight:700;margin-bottom:.25rem">Email</div><div style="color:var(--text-muted);font-size:.9rem">info@sportua.com<br>support@sportua.com</div></div>
+            </div>
+          </div>
+
+          <h3 style="margin-bottom:1rem">Ми в соціальних мережах</h3>
+          <div style="display:flex;gap:.75rem">
+            <a href="#" class="social-link" style="width:44px;height:44px"><i class="fa-brands fa-telegram"></i></a>
+            <a href="#" class="social-link" style="width:44px;height:44px"><i class="fa-brands fa-instagram"></i></a>
+            <a href="#" class="social-link" style="width:44px;height:44px"><i class="fa-brands fa-facebook"></i></a>
+            <a href="#" class="social-link" style="width:44px;height:44px"><i class="fa-brands fa-youtube"></i></a>
+          </div>
+
+          <div class="card" style="margin-top:2rem">
+            <div class="card-body">
+              <h4 style="margin-bottom:.75rem"><i class="fa-solid fa-clock" style="color:var(--warning)"></i> Режим роботи</h4>
+              <div style="display:flex;flex-direction:column;gap:.5rem;font-size:.875rem">
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Понеділок — П'ятниця</span><span style="font-weight:600">9:00 — 18:00</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Субота</span><span style="font-weight:600">10:00 — 15:00</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--text-muted)">Неділя</span><span style="color:var(--error);font-weight:600">Вихідний</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-bottom">
+      <a href="/" class="logo"><div class="logo-icon">&#9889;</div>Спорт<span>UA</span></a>
+      <span>&copy; 2025 СпортUA</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/app.js"></script>
+<script>
+// Responsive
+if (window.innerWidth < 768) {
+  document.querySelector('main .container > div').style.gridTemplateColumns = '1fr';
+}
+
+document.getElementById('contactForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  var btn = document.getElementById('contactSubmitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner spinner-sm" style="border-color:rgba(255,255,255,.3);border-top-color:#fff"></div> Надсилання...';
+
+  try {
+    await API.post('/contact', {
+      name:    document.getElementById('cName').value.trim(),
+      email:   document.getElementById('cEmail').value.trim(),
+      phone:   document.getElementById('cPhone').value.trim() || undefined,
+      subject: document.getElementById('cSubject').value || undefined,
+      message: document.getElementById('cMessage').value.trim()
+    });
+    document.getElementById('successMsg').classList.remove('hidden');
+    document.getElementById('contactForm').reset();
+    document.getElementById('successMsg').scrollIntoView({ behavior:'smooth' });
+  } catch(err) {
+    showToast(err.message || 'Помилка відправки', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Надіслати';
+  }
+});
+</script>
+</body>
+</html>

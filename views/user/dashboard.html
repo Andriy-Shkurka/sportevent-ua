@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Мій кабінет | СпортUA</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/user.css">
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+
+<nav class="navbar">
+  <div class="container">
+    <div class="navbar-inner">
+      <a href="/" class="logo"><div class="logo-icon">&#9889;</div>Спорт<span>UA</span></a>
+      <div class="nav-links">
+        <a href="/">Головна</a><a href="/events">Заходи</a><a href="/news">Новини</a><a href="/calendar">Календар</a><a href="/rankings">Рейтинг</a><a href="/gallery">Галерея</a>
+      </div>
+      <div class="nav-actions" id="navActions"></div>
+      <button class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="/">Головна</a><a href="/events">Заходи</a><a href="/news">Новини</a><a href="/calendar">Календар</a><a href="/rankings">Рейтинг</a><a href="/gallery">Галерея</a>
+    <div style="height:1px;background:var(--border);margin:.25rem 0"></div>
+    <a href="/cabinet">Дашборд</a><a href="/cabinet/profile">Профіль</a><a href="/cabinet/registrations">Реєстрації</a><a href="/cabinet/results">Результати</a><a href="/cabinet/notifications">Сповіщення</a>
+  </div>
+</nav>
+
+<!-- Mobile nav -->
+<div class="cabinet-mobile-nav">
+  <a href="/cabinet" class="cabinet-mobile-link active"><i class="fa-solid fa-gauge"></i> Дашборд</a>
+  <a href="/cabinet/profile" class="cabinet-mobile-link"><i class="fa-solid fa-user"></i> Профіль</a>
+  <a href="/cabinet/registrations" class="cabinet-mobile-link"><i class="fa-solid fa-list-check"></i> Реєстрації</a>
+  <a href="/cabinet/results" class="cabinet-mobile-link"><i class="fa-solid fa-medal"></i> Результати</a>
+  <a href="/cabinet/notifications" class="cabinet-mobile-link"><i class="fa-solid fa-bell"></i> Сповіщення</a>
+</div>
+
+<div class="cabinet-layout">
+  <!-- Sidebar -->
+  <aside class="cabinet-sidebar">
+    <div class="cabinet-user-card" id="sidebarUser">
+      <div class="cabinet-avatar-wrapper">
+        <div class="cabinet-avatar-placeholder" id="avatarPlaceholder">?</div>
+      </div>
+      <div class="cabinet-user-name" id="sidebarName">Завантаження...</div>
+      <div class="cabinet-user-role" id="sidebarRole"></div>
+    </div>
+    <nav class="cabinet-nav">
+      <span class="cabinet-nav-section">Кабінет</span>
+      <a href="/cabinet" class="cabinet-nav-link active"><span class="icon"><i class="fa-solid fa-gauge"></i></span> Дашборд</a>
+      <a href="/cabinet/profile" class="cabinet-nav-link"><span class="icon"><i class="fa-solid fa-user"></i></span> Мій профіль</a>
+      <span class="cabinet-nav-section">Заходи</span>
+      <a href="/cabinet/registrations" class="cabinet-nav-link"><span class="icon"><i class="fa-solid fa-list-check"></i></span> Мої реєстрації</a>
+      <a href="/cabinet/results" class="cabinet-nav-link"><span class="icon"><i class="fa-solid fa-medal"></i></span> Мої результати</a>
+      <span class="cabinet-nav-section">Інше</span>
+      <a href="/cabinet/notifications" class="cabinet-nav-link"><span class="icon"><i class="fa-solid fa-bell"></i></span> Сповіщення <span class="nav-badge" id="unreadBadge" style="display:none">0</span></a>
+      <a href="/events" class="cabinet-nav-link"><span class="icon"><i class="fa-solid fa-calendar-plus"></i></span> Нові заходи</a>
+      <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
+        <button onclick="Auth.logout()" class="cabinet-nav-link" style="width:100%;background:none;border:none;cursor:pointer;text-align:left;color:var(--error)">
+          <span class="icon"><i class="fa-solid fa-right-from-bracket"></i></span> Вийти
+        </button>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Content -->
+  <main class="cabinet-content">
+    <div class="page-title" style="margin-bottom:2rem">
+      <div>
+        <h1 id="welcomeTitle">Вітаємо!</h1>
+        <p style="color:var(--text-muted);margin-top:.25rem" id="welcomeSub">Ваш особистий кабінет спортсмена</p>
+      </div>
+      <a href="/events" class="btn btn-primary"><i class="fa-solid fa-calendar-plus"></i> Знайти заходи</a>
+    </div>
+
+    <!-- Stats -->
+    <div class="user-stats-bar" id="statsBar">
+      <div class="user-stat"><span class="user-stat-value" id="stReg">—</span><span class="user-stat-label">Реєстрацій</span></div>
+      <div class="user-stat"><span class="user-stat-value" id="stApproved">—</span><span class="user-stat-label">Підтверджено</span></div>
+      <div class="user-stat"><span class="user-stat-value" id="stResults">—</span><span class="user-stat-label">Результатів</span></div>
+      <div class="user-stat"><span class="user-stat-value" id="stPoints" style="color:var(--primary)">—</span><span class="user-stat-label">Балів</span></div>
+    </div>
+
+    <!-- Recent registrations -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem" id="dashGrid">
+      <div class="card">
+        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+          <h3 style="font-size:1rem;margin:0">Останні реєстрації</h3>
+          <a href="/cabinet/registrations" class="btn btn-ghost btn-sm">Всі</a>
+        </div>
+        <div id="recentRegs" style="padding:.5rem 0">
+          <div class="loader"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+          <h3 style="font-size:1rem;margin:0">Сповіщення</h3>
+          <a href="/cabinet/notifications" class="btn btn-ghost btn-sm">Всі</a>
+        </div>
+        <div id="recentNotifs" style="padding:.25rem 0">
+          <div class="loader"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+if (!requireAuth()) {}
+
+async function loadDashboard() {
+  var user = Auth.getUser();
+  if (!user) return;
+
+  // Sidebar
+  var initials = (((user.first_name||'')[0]||'') + ((user.last_name||'')[0]||'')).toUpperCase();
+  document.getElementById('avatarPlaceholder').textContent = initials;
+  document.getElementById('sidebarName').textContent = [user.first_name, user.last_name].filter(Boolean).join(' ');
+  document.getElementById('sidebarRole').textContent = user.role === 'admin' ? 'Адміністратор' : 'Спортсмен';
+  document.getElementById('welcomeTitle').textContent = 'Вітаємо, ' + user.first_name + '!';
+
+  // Load registrations
+  try {
+    var regsData = await API.get('/user/registrations', true);
+    var regs = regsData.registrations || regsData || [];
+    document.getElementById('stReg').textContent = regs.length;
+    document.getElementById('stApproved').textContent = regs.filter(function(r) { return r.status === 'approved'; }).length;
+
+    var recentEl = document.getElementById('recentRegs');
+    var recent = regs.slice(0, 5);
+    if (recent.length) {
+      recentEl.innerHTML = recent.map(function(r) {
+        return '<div style="display:flex;align-items:center;gap:.75rem;padding:.75rem 1.5rem;border-bottom:1px solid rgba(48,54,61,.4)">' +
+          '<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:.875rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (r.event_title||'') + '</div>' +
+          '<div style="font-size:.75rem;color:var(--text-muted)">' + formatDate(r.event_start_date||r.created_at) + '</div></div>' +
+          regStatusBadge(r.status) +
+        '</div>';
+      }).join('');
+    } else {
+      recentEl.innerHTML = '<div class="empty-state" style="padding:1.5rem"><div class="empty-icon" style="font-size:2rem">&#128197;</div><h3 style="font-size:.95rem">Немає реєстрацій</h3><p style="font-size:.8rem">Знайдіть цікавий захід та зареєструйтесь</p></div>';
+    }
+  } catch(e) {
+    document.getElementById('recentRegs').innerHTML = '<div style="padding:1rem;text-align:center;color:var(--text-muted);font-size:.85rem">Помилка завантаження</div>';
+  }
+
+  // Load results
+  try {
+    var resData = await API.get('/user/results', true);
+    var results = resData.results || resData || [];
+    document.getElementById('stResults').textContent = results.length;
+    var totalPts = results.reduce(function(sum, r) { return sum + (r.points||0); }, 0);
+    document.getElementById('stPoints').textContent = totalPts;
+  } catch(e) {
+    document.getElementById('stResults').textContent = 0;
+    document.getElementById('stPoints').textContent = 0;
+  }
+
+  // Load notifications
+  try {
+    var notifData = await API.get('/user/notifications', true);
+    var notifs = notifData.notifications || notifData || [];
+    var unread = notifs.filter(function(n) { return !n.is_read; }).length;
+    if (unread > 0) {
+      var badge = document.getElementById('unreadBadge');
+      badge.textContent = unread;
+      badge.style.display = '';
+    }
+
+    var notifEl = document.getElementById('recentNotifs');
+    var recent5 = notifs.slice(0, 5);
+    if (recent5.length) {
+      var typeIcons = { success:'fa-circle-check', error:'fa-circle-xmark', warning:'fa-triangle-exclamation', info:'fa-circle-info' };
+      notifEl.innerHTML = recent5.map(function(n) {
+        return '<div class="notification-item' + (n.is_read ? '' : ' unread') + '">' +
+          '<div class="notification-icon ' + (n.type||'info') + '"><i class="fa-solid ' + (typeIcons[n.type]||'fa-circle-info') + '"></i></div>' +
+          '<div class="notification-body"><div class="notification-title">' + n.title + '</div><div class="notification-text">' + n.message + '</div><div class="notification-time">' + timeAgo(n.created_at) + '</div></div>' +
+          (n.is_read ? '' : '<div class="unread-dot"></div>') +
+        '</div>';
+      }).join('');
+    } else {
+      notifEl.innerHTML = '<div class="empty-state" style="padding:1.5rem"><div class="empty-icon" style="font-size:2rem">&#128276;</div><h3 style="font-size:.95rem">Сповіщень немає</h3></div>';
+    }
+  } catch(e) {}
+}
+
+// Responsive grid
+if (window.innerWidth < 768) {
+  document.getElementById('dashGrid').style.gridTemplateColumns = '1fr';
+}
+
+loadDashboard();
+</script>
+</body>
+</html>

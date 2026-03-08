@@ -1,0 +1,373 @@
+﻿<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Повідомлення | Адмін | СпортUA</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/admin.css">
+  <style>
+    .contact-item { background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:1rem 1.25rem; margin-bottom:.75rem; cursor:pointer; transition:border-color .2s,box-shadow .2s; position:relative; }
+    .contact-item:hover { border-color:var(--primary); box-shadow:0 4px 16px rgba(230,57,70,.1); }
+    .contact-item.unread { border-left:3px solid var(--primary); }
+    .contact-item-header { display:flex; align-items:flex-start; gap:1rem; }
+    .contact-avatar { width:40px; height:40px; border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.9rem; flex-shrink:0; }
+    .contact-item-body { flex:1; min-width:0; }
+    .contact-item-top { display:flex; justify-content:space-between; align-items:center; gap:.5rem; margin-bottom:.25rem; }
+    .contact-name { font-weight:700; font-size:.95rem; }
+    .contact-time { font-size:.8rem; color:var(--text-muted); white-space:nowrap; }
+    .contact-subject { font-size:.875rem; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .contact-preview { font-size:.82rem; color:var(--text-muted); margin-top:.2rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .contact-badges { display:flex; gap:.4rem; margin-top:.4rem; flex-wrap:wrap; }
+    .unread-dot { width:10px; height:10px; border-radius:50%; background:var(--primary); position:absolute; top:1rem; right:1rem; }
+
+    /* Message modal */
+    .message-body { background:var(--bg-secondary); border-radius:8px; padding:1rem; font-size:.9rem; line-height:1.6; white-space:pre-wrap; word-break:break-word; min-height:80px; margin:1rem 0; }
+    .message-meta { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; margin-bottom:1rem; }
+    .message-meta-item { background:var(--bg-secondary); border-radius:8px; padding:.6rem .875rem; }
+    .message-meta-label { font-size:.75rem; color:var(--text-muted); margin-bottom:.15rem; }
+    .message-meta-value { font-size:.875rem; font-weight:500; word-break:break-all; }
+    .reply-section { border-top:1px solid var(--border); padding-top:1rem; margin-top:1rem; }
+    .reply-note { background:rgba(230,57,70,.08); border:1px solid rgba(230,57,70,.2); border-radius:8px; padding:.75rem 1rem; font-size:.82rem; color:var(--text-muted); margin-bottom:.75rem; }
+  </style>
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <a href="/" class="logo" style="font-size:1.1rem"><div class="logo-icon" style="width:28px;height:28px;font-size:.85rem">&#9889;</div>Спорт<span>UA</span></a>
+      <button id="sidebarClose" style="background:none;border:none;color:var(--text-muted);cursor:pointer">&#10005;</button>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Головне</span>
+      <a href="/admin" class="sidebar-link"><span class="icon"><i class="fa-solid fa-gauge"></i></span> Дашборд</a>
+      <a href="/admin/profile" class="sidebar-link"><span class="icon"><i class="fa-solid fa-user"></i></span> Мій профіль</a>
+      <span class="nav-section-label">Управління</span>
+      <a href="/admin/events" class="sidebar-link"><span class="icon"><i class="fa-solid fa-trophy"></i></span> Заходи</a>
+      <a href="/admin/users" class="sidebar-link"><span class="icon"><i class="fa-solid fa-users"></i></span> Користувачі</a>
+      <a href="/admin/registrations" class="sidebar-link"><span class="icon"><i class="fa-solid fa-list-check"></i></span> Реєстрації</a>
+      <a href="/admin/results" class="sidebar-link"><span class="icon"><i class="fa-solid fa-medal"></i></span> Результати</a>
+      <span class="nav-section-label">Контент</span>
+      <a href="/admin/news" class="sidebar-link"><span class="icon"><i class="fa-solid fa-newspaper"></i></span> Новини</a>
+      <a href="/admin/media" class="sidebar-link"><span class="icon"><i class="fa-solid fa-images"></i></span> Медіа</a>
+      <span class="nav-section-label">Аналітика</span>
+      <a href="/admin/reports" class="sidebar-link"><span class="icon"><i class="fa-solid fa-chart-bar"></i></span> Звіти</a>
+      <a href="/admin/contacts" class="sidebar-link active"><span class="icon"><i class="fa-solid fa-envelope"></i></span> Повідомлення</a>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <div class="cabinet-avatar-placeholder" style="width:36px;height:36px;font-size:.75rem;border:2px solid var(--primary)" id="adminAvatarPh">A</div>
+        <div class="sidebar-user-info"><div class="sidebar-user-name" id="adminName">Адмін</div><div class="sidebar-user-role">Адміністратор</div></div>
+      </div>
+      <div style="display:flex;gap:.5rem;margin-top:.75rem">
+        <a href="/" class="btn btn-ghost btn-sm" style="flex:1"><i class="fa-solid fa-globe"></i></a>
+        <button id="logoutBtn" class="btn btn-ghost btn-sm" style="flex:1;color:var(--error)"><i class="fa-solid fa-right-from-bracket"></i></button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="admin-main">
+    <div class="admin-topbar">
+      <div class="topbar-left">
+        <button class="sidebar-toggle" id="sidebarToggle"><i class="fa-solid fa-bars"></i></button>
+        <div class="breadcrumb"><a href="/admin" style="color:var(--text-muted)">Адмін</a> / <span>Повідомлення</span></div>
+      </div>
+      <div class="topbar-right">
+        <span id="unreadCount" style="color:var(--text-muted);font-size:.875rem"></span>
+      </div>
+    </div>
+
+    <div class="admin-content">
+      <div class="page-title">
+        <h1>Повідомлення від користувачів</h1>
+      </div>
+
+      <div class="data-table-header">
+        <div class="data-table-search">
+          <input type="text" id="searchInput" placeholder="Пошук за ім'ям, email або темою..." oninput="debounceSearch()">
+          <button onclick="loadContacts()"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </div>
+        <div class="table-actions" style="display:flex;gap:.5rem">
+          <select class="form-control" id="statusFilter" onchange="loadContacts()" style="padding:.45rem .875rem;font-size:.875rem">
+            <option value="">Всі</option>
+            <option value="new">Нові</option>
+            <option value="read">Прочитані</option>
+            <option value="replied">З відповіддю</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="contactsList">
+        <div class="loader"><div class="spinner"></div></div>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Message Modal -->
+<div id="contactModal" class="modal-overlay" style="display:none">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-header">
+      <h3>Повідомлення</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="message-meta">
+        <div class="message-meta-item">
+          <div class="message-meta-label">Відправник</div>
+          <div class="message-meta-value" id="mName">—</div>
+        </div>
+        <div class="message-meta-item">
+          <div class="message-meta-label">Email</div>
+          <div class="message-meta-value" id="mEmail">—</div>
+        </div>
+        <div class="message-meta-item">
+          <div class="message-meta-label">Тема</div>
+          <div class="message-meta-value" id="mSubject">—</div>
+        </div>
+        <div class="message-meta-item">
+          <div class="message-meta-label">Дата</div>
+          <div class="message-meta-value" id="mDate">—</div>
+        </div>
+        <div class="message-meta-item" id="mPhoneWrap" style="display:none">
+          <div class="message-meta-label">Телефон</div>
+          <div class="message-meta-value" id="mPhone">—</div>
+        </div>
+      </div>
+
+      <div class="message-body" id="mBody"></div>
+
+      <div class="reply-section">
+        <div class="reply-note">
+          <i class="fa-solid fa-circle-info"></i>
+          Відповідь буде надіслана на email відправника. Переконайтесь, що на сервері налаштований SMTP.
+        </div>
+        <div class="form-group">
+          <label class="form-label">Відповідь</label>
+          <textarea class="form-control" id="replyText" rows="4" placeholder="Введіть текст відповіді..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer" style="justify-content:space-between">
+      <button class="btn btn-danger btn-sm" id="deleteContactBtn" onclick="deleteCurrentContact()">
+        <i class="fa-solid fa-trash"></i> Видалити
+      </button>
+      <div style="display:flex;gap:.5rem">
+        <button class="btn btn-outline" onclick="closeModal()">Закрити</button>
+        <button class="btn btn-primary" onclick="sendReply()" id="replyBtn">
+          <i class="fa-solid fa-paper-plane"></i> Надіслати відповідь
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+if (!requireAdminAuth()) throw new Error('Unauthorized');
+
+var currentPage = 1;
+var searchTimer;
+var currentContactId = null;
+
+var SUBJECT_LABELS = {
+  general: 'Загальне питання',
+  registration: 'Реєстрація',
+  results: 'Результати',
+  partnership: 'Партнерство',
+  complaint: 'Скарга',
+  other: 'Інше'
+};
+
+function toggleSidebar() {
+  if (window.innerWidth > 1024) {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+    var m = document.querySelector('.admin-main');
+    if (m) m.classList.toggle('expanded');
+  } else {
+    document.getElementById('sidebar').classList.toggle('mobile-open');
+    document.getElementById('sidebarOverlay').classList.toggle('visible');
+  }
+}
+
+function debounceSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(function() { currentPage = 1; loadContacts(); }, 400);
+}
+
+function closeModal() {
+  document.getElementById('contactModal').style.display = 'none';
+  document.getElementById('replyText').value = '';
+  currentContactId = null;
+}
+
+function statusBadge(status) {
+  var map = {
+    new: '<span class="badge badge-primary">Нове</span>',
+    read: '<span class="badge badge-muted">Прочитано</span>',
+    replied: '<span class="badge badge-success">Відповідь надіслано</span>'
+  };
+  return map[status] || '<span class="badge">' + status + '</span>';
+}
+
+async function openContact(contact) {
+  currentContactId = contact.id;
+  document.getElementById('mName').textContent = contact.name || '—';
+  document.getElementById('mEmail').textContent = contact.email || '—';
+  document.getElementById('mSubject').textContent = SUBJECT_LABELS[contact.subject] || contact.subject || '—';
+  document.getElementById('mDate').textContent = formatDateTime ? formatDateTime(contact.created_at) : (contact.created_at || '—');
+  document.getElementById('mBody').textContent = contact.message || '';
+
+  if (contact.phone) {
+    document.getElementById('mPhoneWrap').style.display = '';
+    document.getElementById('mPhone').textContent = contact.phone;
+  } else {
+    document.getElementById('mPhoneWrap').style.display = 'none';
+  }
+
+  document.getElementById('contactModal').style.display = 'flex';
+
+  // Mark as read if new
+  if (contact.status === 'new') {
+    try {
+      await API.patch('/admin/contacts/' + contact.id, { status: 'read' }, true);
+      // Update UI
+      var item = document.querySelector('[data-contact-id="' + contact.id + '"]');
+      if (item) {
+        item.classList.remove('unread');
+        var dot = item.querySelector('.unread-dot');
+        if (dot) dot.remove();
+        var badge = item.querySelector('.contact-status-badge');
+        if (badge) badge.outerHTML = statusBadge('read');
+      }
+      updateUnreadCount(-1);
+    } catch(e) {}
+  }
+}
+
+function updateUnreadCount(delta) {
+  var el = document.getElementById('unreadCount');
+  var match = el.textContent.match(/\d+/);
+  if (match) {
+    var n = Math.max(0, parseInt(match[0]) + delta);
+    el.textContent = n > 0 ? n + ' непрочитаних' : '';
+  }
+}
+
+async function deleteCurrentContact() {
+  if (!currentContactId) return;
+  if (!confirm('Видалити повідомлення?')) return;
+  try {
+    await API.delete('/admin/contacts/' + currentContactId, true);
+    showToast('Видалено', 'success');
+    closeModal();
+    loadContacts();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function sendReply() {
+  var text = document.getElementById('replyText').value.trim();
+  if (!text) { showToast('Введіть текст відповіді', 'error'); return; }
+  var btn = document.getElementById('replyBtn');
+  btn.disabled = true;
+  try {
+    await API.patch('/admin/contacts/' + currentContactId, { status: 'replied', reply: text }, true);
+    showToast('Відповідь надіслано', 'success');
+    closeModal();
+    loadContacts();
+  } catch(e) {
+    showToast(e.message || 'Помилка надсилання', 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function loadContacts() {
+  var search = document.getElementById('searchInput').value.trim();
+  var status = document.getElementById('statusFilter').value;
+  var list = document.getElementById('contactsList');
+  list.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+
+  try {
+    var params = '?page=' + currentPage + '&limit=20';
+    if (search) params += '&search=' + encodeURIComponent(search);
+    if (status) params += '&status=' + status;
+
+    var data = await API.get('/admin/contacts' + params, true);
+    var contacts = data.contacts || data.data || data || [];
+    var total = data.total || contacts.length;
+    var totalPages = data.totalPages || Math.ceil(total / 20);
+    var unread = data.unread_count || contacts.filter(function(c) { return c.status === 'new'; }).length;
+
+    var countEl = document.getElementById('unreadCount');
+    countEl.textContent = unread > 0 ? unread + ' непрочитаних' : '';
+
+    if (!contacts.length) {
+      list.innerHTML = '<div class="empty-state" style="padding:3rem"><div class="empty-icon">&#128140;</div><h3>Повідомлень не знайдено</h3></div>';
+      document.getElementById('pagination').innerHTML = '';
+      return;
+    }
+
+    list.innerHTML = contacts.map(function(c) {
+      var initials = (c.name || 'U').charAt(0).toUpperCase();
+      var isNew = c.status === 'new';
+      var preview = (c.message || '').substring(0, 100);
+      var subjLabel = SUBJECT_LABELS[c.subject] || c.subject || '';
+      return '<div class="contact-item' + (isNew ? ' unread' : '') + '" data-contact-id="' + c.id + '" onclick="openContact(' + JSON.stringify(c).replace(/"/g,'&quot;') + ')">' +
+        (isNew ? '<div class="unread-dot"></div>' : '') +
+        '<div class="contact-item-header">' +
+          '<div class="contact-avatar">' + initials + '</div>' +
+          '<div class="contact-item-body">' +
+            '<div class="contact-item-top">' +
+              '<div class="contact-name">' + (c.name || '—') + '</div>' +
+              '<div class="contact-time">' + (timeAgo ? timeAgo(c.created_at) : c.created_at) + '</div>' +
+            '</div>' +
+            '<div class="contact-subject">' + subjLabel + '</div>' +
+            '<div class="contact-preview">' + preview + '</div>' +
+            '<div class="contact-badges">' +
+              '<span class="contact-status-badge">' + statusBadge(c.status) + '</span>' +
+              (c.email ? '<span style="font-size:.78rem;color:var(--text-muted)">' + c.email + '</span>' : '') +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    var pag = document.getElementById('pagination');
+    pag.innerHTML = '';
+    for (var i = 1; i <= Math.min(totalPages, 10); i++) {
+      (function(page) {
+        var btn = document.createElement('button');
+        btn.className = 'page-btn' + (page === currentPage ? ' active' : '');
+        btn.textContent = page;
+        btn.onclick = function() { currentPage = page; loadContacts(); };
+        pag.appendChild(btn);
+      })(i);
+    }
+  } catch(err) {
+    list.innerHTML = '<div class="empty-state" style="padding:2rem"><div class="empty-icon">&#10060;</div><h3>Помилка завантаження</h3></div>';
+  }
+}
+
+(function() {
+  var user = Auth.getUser();
+  if (user) {
+    document.getElementById('adminAvatarPh').textContent = (((user.first_name||'')[0]||'') + ((user.last_name||'')[0]||'')).toUpperCase();
+    document.getElementById('adminName').textContent = [user.first_name, user.last_name].filter(Boolean).join(' ');
+  }
+})();
+
+loadContacts();
+document.getElementById('sidebarOverlay').addEventListener('click', toggleSidebar);
+document.getElementById('sidebarClose').addEventListener('click', toggleSidebar);
+document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+document.getElementById('logoutBtn').addEventListener('click', function() { Auth.logout(); });
+</script>
+</body>
+</html>

@@ -1,0 +1,190 @@
+﻿<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Реєстрації | Адмін | СпортUA</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="admin-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <a href="/" class="logo" style="font-size:1.1rem"><div class="logo-icon" style="width:28px;height:28px;font-size:.85rem">&#9889;</div>Спорт<span>UA</span></a>
+      <button id="sidebarClose" style="background:none;border:none;color:var(--text-muted);cursor:pointer">&#10005;</button>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Головне</span>
+      <a href="/admin" class="sidebar-link"><span class="icon"><i class="fa-solid fa-gauge"></i></span> Дашборд</a>
+      <a href="/admin/profile" class="sidebar-link"><span class="icon"><i class="fa-solid fa-user"></i></span> Мій профіль</a>
+      <span class="nav-section-label">Управління</span>
+      <a href="/admin/events" class="sidebar-link"><span class="icon"><i class="fa-solid fa-trophy"></i></span> Заходи</a>
+      <a href="/admin/users" class="sidebar-link"><span class="icon"><i class="fa-solid fa-users"></i></span> Користувачі</a>
+      <a href="/admin/registrations" class="sidebar-link active"><span class="icon"><i class="fa-solid fa-list-check"></i></span> Реєстрації</a>
+      <a href="/admin/results" class="sidebar-link"><span class="icon"><i class="fa-solid fa-medal"></i></span> Результати</a>
+      <span class="nav-section-label">Контент</span>
+      <a href="/admin/news" class="sidebar-link"><span class="icon"><i class="fa-solid fa-newspaper"></i></span> Новини</a>
+      <a href="/admin/media" class="sidebar-link"><span class="icon"><i class="fa-solid fa-images"></i></span> Медіа</a>
+      <span class="nav-section-label">Аналітика</span>
+      <a href="/admin/reports" class="sidebar-link"><span class="icon"><i class="fa-solid fa-chart-bar"></i></span> Звіти</a>
+      <a href="/admin/contacts" class="sidebar-link"><span class="icon"><i class="fa-solid fa-envelope"></i></span> Повідомлення</a>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <div class="cabinet-avatar-placeholder" style="width:36px;height:36px;font-size:.75rem;border:2px solid var(--primary)" id="adminAvatarPh">A</div>
+        <div class="sidebar-user-info"><div class="sidebar-user-name" id="adminName">Адмін</div><div class="sidebar-user-role">Адміністратор</div></div>
+      </div>
+      <div style="display:flex;gap:.5rem;margin-top:.75rem">
+        <a href="/" class="btn btn-ghost btn-sm" style="flex:1"><i class="fa-solid fa-globe"></i></a>
+        <button id="logoutBtn" class="btn btn-ghost btn-sm" style="flex:1;color:var(--error)"><i class="fa-solid fa-right-from-bracket"></i></button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="admin-main">
+    <div class="admin-topbar">
+      <div class="topbar-left">
+        <button class="sidebar-toggle" id="sidebarToggle"><i class="fa-solid fa-bars"></i></button>
+        <div class="breadcrumb"><a href="/admin" style="color:var(--text-muted)">Адмін</a> / <span>Реєстрації</span></div>
+      </div>
+    </div>
+
+    <div class="admin-content">
+      <div class="page-title"><h1>Реєстрації учасників</h1></div>
+
+      <div class="data-table-header">
+        <div class="data-table-search">
+          <input type="text" id="searchInput" placeholder="Пошук учасника або заходу..." oninput="debounceSearch()">
+          <button onclick="loadRegs()"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </div>
+        <div class="table-actions">
+          <select class="form-control" id="statusFilter" onchange="loadRegs()" style="padding:.45rem .875rem;font-size:.875rem">
+            <option value="">Всі статуси</option>
+            <option value="pending">На розгляді</option>
+            <option value="approved">Підтверджені</option>
+            <option value="rejected">Відхилені</option>
+            <option value="withdrawn">Відкликані</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-wrapper" id="regsTableWrap">
+        <div class="loader"><div class="spinner"></div></div>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+if (!requireAdminAuth()) throw new Error('Unauthorized');
+
+var currentPage = 1;
+var searchTimer;
+
+function toggleSidebar() {
+  if (window.innerWidth > 1024) {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+    var m = document.querySelector('.admin-main');
+    if (m) m.classList.toggle('expanded');
+  } else {
+    document.getElementById('sidebar').classList.toggle('mobile-open');
+    document.getElementById('sidebarOverlay').classList.toggle('visible');
+  }
+}
+
+function debounceSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(function() { currentPage = 1; loadRegs(); }, 400);
+}
+
+async function updateStatus(id, status) {
+  try {
+    await API.patch('/admin/registrations/' + id + '/status', { status }, true);
+    showToast('Статус оновлено: ' + (REG_STATUS_LABELS[status]||status), 'success');
+    loadRegs();
+  } catch(e) {
+    showToast(e.message, 'error');
+  }
+}
+
+async function loadRegs() {
+  var search = document.getElementById('searchInput').value.trim();
+  var status = document.getElementById('statusFilter').value;
+  var wrap = document.getElementById('regsTableWrap');
+  wrap.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+
+  try {
+    var params = '?page=' + currentPage + '&limit=15';
+    if (search) params += '&search=' + encodeURIComponent(search);
+    if (status) params += '&status=' + status;
+
+    var data = await API.get('/admin/registrations' + params, true);
+    var regs = data.registrations || data.data || data;
+    var total = data.total || regs.length;
+    var totalPages = data.totalPages || Math.ceil(total / 15);
+
+    if (!regs.length) {
+      wrap.innerHTML = '<div class="empty-state" style="padding:3rem"><div class="empty-icon">&#128197;</div><h3>Реєстрацій не знайдено</h3></div>';
+      return;
+    }
+
+    wrap.innerHTML = '<table class="table"><thead><tr>' +
+      '<th>Учасник</th><th>Захід</th><th>Дата заходу</th><th>Подано</th><th>Статус</th><th>Дії</th>' +
+    '</tr></thead><tbody>' +
+    regs.map(function(r) {
+      var pName = r.user_name || ((r.first_name||'') + ' ' + (r.last_name||'')).trim() || '—';
+      var participantCell = '<div style="font-weight:600">' + esc(pName) + '</div>' +
+        (r.team_name ? '<div style="margin-top:.2rem"><span style="display:inline-flex;align-items:center;gap:.3rem;font-size:.72rem;padding:.15rem .5rem;border-radius:4px;background:rgba(67,97,238,.15);color:#4361ee;font-weight:600"><i class="fa-solid fa-people-group"></i> ' + esc(r.team_name) + '</span></div>' : '');
+      return '<tr>' +
+        '<td>' + participantCell + '</td>' +
+        '<td style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (r.event_title||'—') + '</td>' +
+        '<td style="white-space:nowrap">' + (r.event_start_date ? formatDate(r.event_start_date) : '—') + '</td>' +
+        '<td style="white-space:nowrap;color:var(--text-muted)">' + formatDate(r.registered_at || r.created_at) + '</td>' +
+        '<td>' + regStatusBadge(r.status) + '</td>' +
+        '<td><div style="display:flex;gap:.35rem;flex-wrap:wrap">' +
+          (r.status === 'pending' ? '<button class="btn btn-success btn-sm" onclick="updateStatus(' + r.id + ',\'approved\')"><i class="fa-solid fa-check"></i></button>' : '') +
+          (r.status === 'pending' || r.status === 'approved' ? '<button class="btn btn-danger btn-sm" onclick="updateStatus(' + r.id + ',\'rejected\')"><i class="fa-solid fa-xmark"></i></button>' : '') +
+        '</div></td>' +
+      '</tr>';
+    }).join('') + '</tbody></table>';
+
+    var pag = document.getElementById('pagination');
+    pag.innerHTML = '';
+    for (var i = 1; i <= Math.min(totalPages, 10); i++) {
+      (function(page) {
+        var btn = document.createElement('button');
+        btn.className = 'page-btn' + (page === currentPage ? ' active' : '');
+        btn.textContent = page;
+        btn.onclick = function() { currentPage = page; loadRegs(); };
+        pag.appendChild(btn);
+      })(i);
+    }
+  } catch(err) {
+    wrap.innerHTML = '<div class="empty-state" style="padding:2rem"><div class="empty-icon">&#10060;</div><h3>Помилка: ' + err.message + '</h3></div>';
+  }
+}
+
+(function() {
+  var user = Auth.getUser();
+  if (user) {
+    document.getElementById('adminAvatarPh').textContent = (((user.first_name||'')[0]||'') + ((user.last_name||'')[0]||'')).toUpperCase();
+    document.getElementById('adminName').textContent = [user.first_name, user.last_name].filter(Boolean).join(' ');
+  }
+})();
+
+loadRegs();
+document.getElementById('sidebarOverlay').addEventListener('click', toggleSidebar);
+document.getElementById('sidebarClose').addEventListener('click', toggleSidebar);
+document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+document.getElementById('logoutBtn').addEventListener('click', function() { Auth.logout(); });
+</script>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Правила участі | СпортUA</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .rules-content h2 { font-size:1.35rem; margin:2.5rem 0 1rem; padding-top:1rem; border-top:1px solid var(--border); }
+    .rules-content h2:first-child { border-top:none; margin-top:0; padding-top:0; }
+    .rules-content p, .rules-content li { color:var(--text-muted); line-height:1.8; }
+    .rules-content ul, .rules-content ol { padding-left:1.5rem; margin-bottom:1rem; }
+    .rules-content ul li { list-style:disc; } .rules-content ol li { list-style:decimal; }
+    .rules-toc { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; }
+    .rules-toc a { display:block; color:var(--text-muted); padding:.3rem 0; font-size:.875rem; transition:var(--transition); }
+    .rules-toc a:hover { color:var(--primary); }
+  </style>
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+
+<nav class="navbar">
+  <div class="container">
+    <div class="navbar-inner">
+      <a href="/" class="logo"><div class="logo-icon">&#9889;</div>Спорт<span>UA</span></a>
+      <div class="nav-links">
+        <a href="/">Головна</a><a href="/events">Заходи</a><a href="/news">Новини</a>
+        <a href="/calendar">Календар</a><a href="/rankings">Рейтинг</a><a href="/gallery">Галерея</a>
+      </div>
+      <div class="nav-actions" id="navActions"></div>
+      <button class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="/">Головна</a><a href="/events">Заходи</a><a href="/news">Новини</a><a href="/calendar">Календар</a><a href="/rankings">Рейтинг</a><a href="/gallery">Галерея</a>
+  </div>
+</nav>
+
+<div style="background:var(--bg-card);border-bottom:1px solid var(--border);padding:2.5rem 0">
+  <div class="container">
+    <span class="section-label"><i class="fa-solid fa-scale-balanced"></i> Документи</span>
+    <h1 style="margin:.5rem 0 .75rem">Правила участі</h1>
+    <p>Умови використання платформи та правила проведення заходів</p>
+  </div>
+</div>
+
+<main>
+  <div class="section">
+    <div class="container">
+      <div style="display:grid;grid-template-columns:240px 1fr;gap:3rem;align-items:start">
+        <!-- TOC -->
+        <div class="rules-toc" style="position:sticky;top:80px">
+          <h4 style="margin-bottom:1rem;font-size:.875rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted)">Зміст</h4>
+          <a href="#section1">1. Загальні положення</a>
+          <a href="#section2">2. Реєстрація</a>
+          <a href="#section3">3. Участь у заходах</a>
+          <a href="#section4">4. Правила поведінки</a>
+          <a href="#section5">5. Обробка даних</a>
+          <a href="#section6">6. Відповідальність</a>
+          <a href="#section7">7. Змінення правил</a>
+        </div>
+
+        <!-- Content -->
+        <div class="rules-content">
+          <div class="alert alert-info" style="margin-bottom:2rem">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>Останнє оновлення: Січень 2025</span>
+          </div>
+
+          <h2 id="section1">1. Загальні положення</h2>
+          <p>Дані правила регулюють порядок використання вебплатформи СпортUA (далі — Платформа) та участі в спортивних заходах, що організовуються через неї.</p>
+          <p>Використовуючи Платформу, ви погоджуєтесь з цими Правилами. Якщо ви не погоджуєтесь з будь-яким положенням, будь ласка, припиніть використання Платформи.</p>
+
+          <h2 id="section2">2. Реєстрація та акаунт</h2>
+          <ul>
+            <li>Для участі в заходах необхідно пройти реєстрацію на Платформі.</li>
+            <li>При реєстрації необхідно надати достовірну інформацію про себе.</li>
+            <li>Один користувач може мати лише один акаунт.</li>
+            <li>Ви несете відповідальність за збереження даних доступу до вашого акаунту.</li>
+            <li>Адміністрація залишає за собою право заблокувати акаунт у разі порушення Правил.</li>
+          </ul>
+
+          <h2 id="section3">3. Участь у заходах</h2>
+          <ol>
+            <li>Реєстрація на захід можлива протягом встановленого організатором терміну.</li>
+            <li>Кількість учасників може бути обмежена — у такому випадку заявки обробляються в порядку черги.</li>
+            <li>Організатори залишають за собою право відхилити заявку без пояснення причин.</li>
+            <li>Відкликання реєстрації допускається до настання дедлайну, встановленого організатором.</li>
+            <li>Вартість участі вказана на сторінці кожного заходу.</li>
+          </ol>
+
+          <h2 id="section4">4. Правила поведінки</h2>
+          <p>Всі учасники зобов'язані:</p>
+          <ul>
+            <li>Дотримуватися спортивної етики та принципу чесної гри (fair play).</li>
+            <li>Поважати інших учасників, суддів та організаторів.</li>
+            <li>Утримуватись від вживання заборонених речовин (допінг).</li>
+            <li>Виконувати рішення суддів та організаторів заходу.</li>
+            <li>Не порушувати громадський порядок на місці проведення змагань.</li>
+          </ul>
+
+          <h2 id="section5">5. Обробка персональних даних</h2>
+          <p>Платформа збирає та обробляє персональні дані користувачів відповідно до Закону України "Про захист персональних даних".</p>
+          <p>Ваші дані використовуються виключно для:</p>
+          <ul>
+            <li>Ідентифікації учасника в системі.</li>
+            <li>Організації та проведення спортивних заходів.</li>
+            <li>Формування офіційних рейтингів та статистики.</li>
+            <li>Зв'язку з учасником щодо заходів та Платформи.</li>
+          </ul>
+
+          <h2 id="section6">6. Відповідальність</h2>
+          <p>Платформа не несе відповідальності за:</p>
+          <ul>
+            <li>Травми, отримані під час участі в заходах.</li>
+            <li>Втрату або пошкодження майна учасників.</li>
+            <li>Скасування або перенесення заходів організаторами.</li>
+          </ul>
+          <p>Учасники беруть участь у заходах на власний ризик і несуть повну відповідальність за свої дії.</p>
+
+          <h2 id="section7">7. Змінення правил</h2>
+          <p>Адміністрація залишає за собою право вносити зміни до цих Правил. Про суттєві зміни користувачі будуть повідомлені через Платформу або електронну пошту.</p>
+          <p>Продовження використання Платформи після внесення змін означає ваше погодження з оновленими Правилами.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-bottom">
+      <a href="/" class="logo"><div class="logo-icon">&#9889;</div>Спорт<span>UA</span></a>
+      <span>&copy; 2025 СпортUA</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/app.js"></script>
+<script>
+if (window.innerWidth < 768) {
+  document.querySelector('main .container > div').style.gridTemplateColumns = '1fr';
+  document.querySelector('.rules-toc').style.position = 'static';
+}
+</script>
+</body>
+</html>

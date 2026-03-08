@@ -1,0 +1,455 @@
+/* =============================================
+   USER CABINET STYLES — 2025-2026 Design System
+   ============================================= */
+
+.cabinet-layout {
+  display: flex;
+  min-height: calc(100vh - 64px);
+  gap: 0;
+}
+
+/* =============================================
+   SIDEBAR
+   ============================================= */
+.cabinet-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--bg-card);
+  border-right: 1px solid var(--border-subtle, color-mix(in oklch, var(--border) 55%, transparent));
+  padding: 1.5rem 0;
+  position: sticky;
+  top: 64px;
+  height: calc(100vh - 64px);
+  overflow-y: auto;
+}
+
+.cabinet-user-card {
+  padding: 0 1.25rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.75rem;
+  text-align: center;
+}
+
+.cabinet-avatar-wrapper {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 0.75rem;
+}
+
+.cabinet-avatar {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--primary);
+  /* 2025 — subtle avatar glow */
+  box-shadow: 0 0 16px color-mix(in oklch, var(--primary) 30%, transparent);
+}
+
+.cabinet-avatar-placeholder {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  border: 3px solid var(--primary);
+  box-shadow: 0 0 16px color-mix(in oklch, var(--primary) 30%, transparent);
+}
+
+.cabinet-user-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.25rem; }
+.cabinet-user-role { font-size: 0.75rem; color: var(--text-muted); }
+
+.cabinet-nav { display: flex; flex-direction: column; gap: 0.125rem; padding: 0 0.75rem; }
+
+.cabinet-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: var(--transition);
+  position: relative;
+}
+
+.cabinet-nav-link:hover { color: var(--text); background: var(--bg-card2); }
+
+/* 2025 — gradient active nav link */
+.cabinet-nav-link.active {
+  color: var(--primary);
+  background: linear-gradient(90deg,
+    color-mix(in oklch, var(--primary) 12%, transparent) 0%,
+    color-mix(in oklch, var(--primary) 4%, transparent) 60%,
+    transparent 100%);
+}
+
+.cabinet-nav-link.active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--primary);
+  border-radius: 0 2px 2px 0;
+  box-shadow: 2px 0 6px color-mix(in oklch, var(--primary) 30%, transparent);
+}
+
+.cabinet-nav-link .icon { width: 18px; text-align: center; flex-shrink: 0; }
+
+.cabinet-nav-link .nav-badge {
+  margin-left: auto;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.65rem;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  box-shadow: 0 0 6px color-mix(in oklch, var(--primary) 40%, transparent);
+}
+
+.cabinet-nav-section {
+  padding: 0.5rem 0.75rem 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+/* =============================================
+   MAIN CONTENT
+   ============================================= */
+.cabinet-content {
+  flex: 1;
+  padding: 2rem;
+  overflow-x: hidden;
+}
+
+/* Page title — matches admin.css pattern */
+.cabinet-content .page-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.cabinet-content .page-title h1 { margin: 0; }
+
+/* Gap between stacked cards */
+.registration-card + .registration-card { margin-top: 0.75rem; }
+.result-card + .result-card             { margin-top: 0.75rem; }
+
+/* =============================================
+   PROFILE HEADER — 2025: gradient overlay
+   ============================================= */
+.profile-header {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 12px rgba(0,0,0,.22);
+}
+
+/* 2025 — gradient overlay behind avatar */
+.profile-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 220px; height: 100%;
+  background: linear-gradient(135deg,
+    color-mix(in oklch, var(--primary) 12%, var(--bg-card)) 0%,
+    transparent 70%);
+  pointer-events: none;
+}
+
+.profile-avatar-section {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.profile-avatar-large {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--primary);
+  margin-bottom: 0.75rem;
+  box-shadow: 0 0 20px color-mix(in oklch, var(--primary) 35%, transparent);
+}
+
+.profile-info { flex: 1; min-width: 200px; position: relative; z-index: 1; }
+.profile-name { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.25rem; }
+.profile-role { color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem; }
+
+.profile-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.profile-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+/* =============================================
+   STATS BAR — 2025: bento grid 2×2
+   ============================================= */
+.user-stats-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 640px) {
+  .user-stats-bar { grid-template-columns: repeat(4, 1fr); }
+}
+
+.user-stat {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  text-align: center;
+  transition: var(--transition);
+  box-shadow: 0 1px 2px rgba(0,0,0,.25), 0 4px 10px rgba(0,0,0,.18);
+}
+
+.user-stat:hover {
+  border-color: var(--text-muted);
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0,0,0,.35), 0 8px 20px rgba(0,0,0,.25);
+}
+
+.user-stat-value {
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: var(--primary);
+  display: block;
+}
+
+.user-stat-label { font-size: 0.75rem; color: var(--text-muted); }
+
+/* =============================================
+   REGISTRATION CARD — hover + status accent
+   ============================================= */
+.registration-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: var(--transition);
+  flex-wrap: wrap;
+  box-shadow: 0 1px 2px rgba(0,0,0,.2), 0 4px 10px rgba(0,0,0,.15);
+}
+
+.registration-card:hover {
+  border-color: var(--text-muted);
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0,0,0,.35), 0 8px 20px rgba(0,0,0,.28);
+}
+
+/* Status left-border accent */
+.registration-card[data-status="confirmed"]   { border-left: 3px solid var(--success); }
+.registration-card[data-status="pending"]     { border-left: 3px solid var(--warning); }
+.registration-card[data-status="cancelled"]   { border-left: 3px solid var(--error); }
+
+.registration-event-image {
+  width: 80px;
+  height: 60px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: var(--bg-card2);
+  flex-shrink: 0;
+}
+
+.registration-info { flex: 1; min-width: 150px; }
+.registration-event-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.3rem; }
+.registration-meta { font-size: 0.8rem; color: var(--text-muted); }
+.registration-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+/* =============================================
+   NOTIFICATIONS — 2025: unread glow border
+   ============================================= */
+.notification-item {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(48,54,61,.45);
+  transition: var(--transition);
+  border-left: 2px solid transparent;
+}
+
+.notification-item:last-child { border-bottom: none; }
+.notification-item:hover { background: rgba(255,255,255,.02); }
+
+/* 2025 — unread: subtle glow on left border */
+.notification-item.unread {
+  background: rgba(230,57,70,.04);
+  border-left: 2px solid var(--primary);
+  box-shadow: inset 3px 0 8px rgba(230,57,70,.1);
+}
+
+.notification-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.9rem;
+}
+
+.notification-icon.success { background: rgba(63,185,80,.15);  color: var(--success); }
+.notification-icon.error   { background: rgba(248,81,73,.15);  color: var(--error); }
+.notification-icon.warning { background: rgba(210,153,34,.15); color: var(--warning); }
+.notification-icon.info    { background: rgba(88,166,255,.15); color: var(--info); }
+
+.notification-body { flex: 1; }
+.notification-title { font-weight: 600; font-size: 0.875rem; margin-bottom: 0.2rem; }
+.notification-text  { font-size: 0.8rem; color: var(--text-muted); }
+.notification-time  { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.3rem; }
+
+.unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  margin-top: 6px;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px rgba(230,57,70,.55);
+}
+
+/* =============================================
+   RESULT CARDS — 2025: medal glow
+   ============================================= */
+.result-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  transition: var(--transition);
+  box-shadow: 0 1px 2px rgba(0,0,0,.2), 0 4px 10px rgba(0,0,0,.15);
+}
+
+.result-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0,0,0,.35), 0 8px 20px rgba(0,0,0,.28);
+}
+
+.result-place {
+  font-size: 2rem;
+  font-weight: 900;
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+
+/* 2025 — medal glow effects */
+.result-place.gold {
+  background: rgba(255,193,7,.15);
+  color: #FFD700;
+  box-shadow: 0 0 16px rgba(255,215,0,.3),
+              0 0 4px rgba(255,215,0,.2);
+}
+
+.result-place.silver {
+  background: rgba(192,192,192,.15);
+  color: #C0C0C0;
+  box-shadow: 0 0 12px rgba(192,192,192,.25),
+              0 0 4px rgba(192,192,192,.15);
+}
+
+.result-place.bronze {
+  background: rgba(205,127,50,.15);
+  color: #CD7F32;
+  box-shadow: 0 0 12px rgba(205,127,50,.3),
+              0 0 4px rgba(205,127,50,.15);
+}
+
+.result-place.other {
+  background: var(--bg-card2);
+  color: var(--text-muted);
+}
+
+.result-info       { flex: 1; min-width: 150px; }
+.result-event-name { font-weight: 700; margin-bottom: 0.3rem; }
+.result-meta       { font-size: 0.8rem; color: var(--text-muted); }
+.result-points     { font-size: 1.25rem; font-weight: 700; color: var(--primary); }
+
+/* =============================================
+   MOBILE CABINET
+   ============================================= */
+.cabinet-mobile-nav {
+  display: none;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 1rem;
+  overflow-x: auto;
+  gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .cabinet-sidebar    { display: none; }
+  .cabinet-mobile-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.4rem; }
+  .cabinet-content    { padding: 1rem; }
+}
+
+.cabinet-mobile-link {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.875rem;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: var(--transition);
+}
+
+.cabinet-mobile-link.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  box-shadow: 0 0 10px color-mix(in oklch, var(--primary) 35%, transparent);
+}

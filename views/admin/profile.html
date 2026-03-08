@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Мій профіль | Адмін СпортUA</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/admin.css">
+  <style>
+    .avatar-upload-wrap { position:relative; display:inline-block; cursor:pointer; }
+    .avatar-upload-wrap:hover .avatar-upload-overlay { opacity:1; }
+    .avatar-upload-overlay { position:absolute; inset:0; background:rgba(0,0,0,.55); border-radius:50%;
+      display:flex; align-items:center; justify-content:center; flex-direction:column; gap:.25rem;
+      opacity:0; transition:opacity .3s; color:#fff; font-size:.8rem; }
+    .profile-info-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:.5rem .75rem; }
+    .profile-meta-item { display:flex; align-items:center; gap:.5rem; color:var(--text-muted); font-size:.875rem; }
+    .profile-meta-item i { width:16px; text-align:center; color:var(--primary); }
+
+    .view-section { display:block; }
+    .edit-section  { display:none; }
+    body.edit-mode .view-section { display:none; }
+    body.edit-mode .edit-section  { display:block; }
+  </style>
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="admin-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <a href="/" class="logo" style="font-size:1.1rem"><div class="logo-icon" style="width:28px;height:28px;font-size:.85rem">&#9889;</div>Спорт<span>UA</span></a>
+      <button id="sidebarClose" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem">&#10005;</button>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Головне</span>
+      <a href="/admin" class="sidebar-link"><span class="icon"><i class="fa-solid fa-gauge"></i></span> Дашборд</a>
+      <a href="/admin/profile" class="sidebar-link active"><span class="icon"><i class="fa-solid fa-user"></i></span> Мій профіль</a>
+      <span class="nav-section-label">Управління</span>
+      <a href="/admin/events" class="sidebar-link"><span class="icon"><i class="fa-solid fa-trophy"></i></span> Заходи</a>
+      <a href="/admin/users" class="sidebar-link"><span class="icon"><i class="fa-solid fa-users"></i></span> Користувачі</a>
+      <a href="/admin/registrations" class="sidebar-link"><span class="icon"><i class="fa-solid fa-list-check"></i></span> Реєстрації</a>
+      <a href="/admin/results" class="sidebar-link"><span class="icon"><i class="fa-solid fa-medal"></i></span> Результати</a>
+      <span class="nav-section-label">Контент</span>
+      <a href="/admin/news" class="sidebar-link"><span class="icon"><i class="fa-solid fa-newspaper"></i></span> Новини</a>
+      <a href="/admin/media" class="sidebar-link"><span class="icon"><i class="fa-solid fa-images"></i></span> Медіа</a>
+      <span class="nav-section-label">Аналітика</span>
+      <a href="/admin/reports" class="sidebar-link"><span class="icon"><i class="fa-solid fa-chart-bar"></i></span> Звіти</a>
+      <a href="/admin/contacts" class="sidebar-link"><span class="icon"><i class="fa-solid fa-envelope"></i></span> Повідомлення</a>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <div class="cabinet-avatar-placeholder" style="width:36px;height:36px;font-size:.75rem;border:2px solid var(--primary)" id="adminAvatarPh">A</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="adminName">Адміністратор</div>
+          <div class="sidebar-user-role">Адміністратор</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:.5rem;margin-top:.75rem">
+        <a href="/" class="btn btn-ghost btn-sm" style="flex:1" title="На сайт"><i class="fa-solid fa-globe"></i></a>
+        <button id="logoutBtn" class="btn btn-ghost btn-sm" style="flex:1;color:var(--error)" title="Вийти"><i class="fa-solid fa-right-from-bracket"></i></button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="admin-main" id="adminMain">
+    <div class="admin-topbar">
+      <div class="topbar-left">
+        <button class="sidebar-toggle" id="sidebarToggle"><i class="fa-solid fa-bars"></i></button>
+        <div class="breadcrumb"><a href="/admin" style="color:var(--text-muted)">Адмін</a> / <span>Мій профіль</span></div>
+      </div>
+      <div class="topbar-right">
+        <div class="view-section">
+          <button class="btn btn-primary btn-sm" onclick="enterEditMode()">
+            <i class="fa-solid fa-pen"></i> Редагувати
+          </button>
+        </div>
+        <div class="edit-section">
+          <div style="display:flex;gap:.5rem">
+            <button class="btn btn-ghost btn-sm" onclick="exitEditMode()">
+              <i class="fa-solid fa-xmark"></i> Скасувати
+            </button>
+            <button class="btn btn-primary btn-sm" form="profileForm" type="submit" id="profileSaveBtn">
+              <i class="fa-solid fa-floppy-disk"></i> Зберегти
+            </button>
+          </div>
+        </div>
+        <a href="/events" class="btn btn-outline btn-sm" target="_blank"><i class="fa-solid fa-globe"></i> Сайт</a>
+        <a href="/admin/contacts" class="topbar-notif"><i class="fa-solid fa-envelope"></i><span class="notif-dot" id="msgDot" style="display:none"></span></a>
+      </div>
+    </div>
+
+    <div class="admin-content">
+      <div class="page-title">
+        <div><h1>Мій профіль</h1><p style="color:var(--text-muted);margin-top:.25rem">Особисті дані адміністратора</p></div>
+      </div>
+
+      <!-- ===== VIEW MODE ===== -->
+      <div class="view-section">
+        <div class="chart-container" id="profileViewCard">
+          <div class="loader"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- ===== EDIT MODE ===== -->
+      <div class="edit-section">
+        <!-- Avatar -->
+        <div class="chart-container" style="margin-bottom:1.5rem">
+          <h3 style="margin-bottom:1rem">Фото профілю</h3>
+          <div style="display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap">
+            <label class="avatar-upload-wrap" for="avatarInput" title="Змінити фото">
+              <img id="profileAvatar" src="" alt="Аватар" style="display:none;width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--primary)">
+              <div class="cabinet-avatar-placeholder" id="profileInitials" style="width:80px;height:80px;font-size:1.5rem;line-height:80px;text-align:center;border:3px solid var(--primary)">A</div>
+              <div class="avatar-upload-overlay"><i class="fa-solid fa-camera"></i><span>Змінити</span></div>
+            </label>
+            <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="uploadAvatar(this)">
+            <div>
+              <div style="font-weight:600;margin-bottom:.25rem">Завантажити нове фото</div>
+              <div style="font-size:.8rem;color:var(--text-muted)">JPG або PNG, до 5 МБ</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Edit form -->
+        <div class="chart-container" style="margin-bottom:1.5rem">
+          <h3 style="margin-bottom:1.25rem">Основна інформація</h3>
+          <form id="profileForm" style="max-width:560px">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Ім'я <span class="required">*</span></label>
+                <input class="form-control" type="text" id="pFirstName" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Прізвище <span class="required">*</span></label>
+                <input class="form-control" type="text" id="pLastName" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Телефон</label>
+                <input class="form-control" type="tel" id="pPhone" placeholder="+380XXXXXXXXX">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Дата народження</label>
+                <input class="form-control" type="date" id="pBirth">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Місто</label>
+                <input class="form-control" type="text" id="pCity" placeholder="Київ">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Країна</label>
+                <input class="form-control" type="text" id="pCountry" placeholder="Україна">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Про себе</label>
+              <textarea class="form-control" id="pBio" rows="3" placeholder="Розкажіть про себе..."></textarea>
+            </div>
+          </form>
+        </div>
+
+        <!-- Change password -->
+        <div class="chart-container">
+          <h3 style="margin-bottom:1.25rem">Змінити пароль</h3>
+          <form id="pwForm" style="max-width:400px">
+            <div class="form-group">
+              <label class="form-label">Поточний пароль</label>
+              <input class="form-control" type="password" id="pwCurrent" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Новий пароль</label>
+              <input class="form-control" type="password" id="pwNew" minlength="8" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Підтвердження нового пароля</label>
+              <input class="form-control" type="password" id="pwConfirm" required>
+            </div>
+            <button type="submit" class="btn btn-secondary">Змінити пароль</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+if (!requireAdminAuth()) throw new Error('Unauthorized');
+
+var _profileData = null;
+
+function toggleSidebar() {
+  if (window.innerWidth > 1024) {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+    var m = document.querySelector('.admin-main');
+    if (m) m.classList.toggle('expanded');
+  } else {
+    document.getElementById('sidebar').classList.toggle('mobile-open');
+    document.getElementById('sidebarOverlay').classList.toggle('visible');
+  }
+}
+document.getElementById('sidebarOverlay').addEventListener('click', toggleSidebar);
+document.getElementById('sidebarClose').addEventListener('click', toggleSidebar);
+document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+document.getElementById('logoutBtn').addEventListener('click', function() { Auth.logout(); });
+
+function enterEditMode() {
+  document.body.classList.add('edit-mode');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (_profileData) fillEditForm(_profileData);
+}
+function exitEditMode() {
+  document.body.classList.remove('edit-mode');
+}
+
+function fillEditForm(u) {
+  document.getElementById('pFirstName').value = u.first_name || '';
+  document.getElementById('pLastName').value  = u.last_name  || '';
+  document.getElementById('pPhone').value     = u.phone      || '';
+  document.getElementById('pBirth').value     = u.birth_date ? u.birth_date.split('T')[0] : '';
+  document.getElementById('pCity').value      = u.city       || '';
+  document.getElementById('pCountry').value   = u.country    || '';
+  document.getElementById('pBio').value       = u.bio        || '';
+
+  if (u.avatar) {
+    var img = document.getElementById('profileAvatar');
+    img.src = u.avatar.startsWith('/') ? u.avatar : '/uploads/' + u.avatar;
+    img.style.display = '';
+    document.getElementById('profileInitials').style.display = 'none';
+  } else {
+    var initials = (((u.first_name||'')[0]||'') + ((u.last_name||'')[0]||'')).toUpperCase();
+    document.getElementById('profileInitials').textContent = initials;
+  }
+}
+
+async function uploadAvatar(input) {
+  if (!input.files || !input.files[0]) return;
+  var fd = new FormData();
+  fd.append('avatar', input.files[0]);
+  try {
+    var data = await API.upload('/user/profile', fd);
+    showToast('Фото оновлено!', 'success');
+    if (data.avatar) {
+      var img = document.getElementById('profileAvatar');
+      img.src = data.avatar.startsWith('/') ? data.avatar : '/uploads/' + data.avatar;
+      img.style.display = '';
+      document.getElementById('profileInitials').style.display = 'none';
+      setTimeout(loadProfile, 300);
+    }
+  } catch(err) {
+    showToast(err.message || 'Помилка завантаження', 'error');
+  }
+}
+
+async function loadProfile() {
+  try {
+    var u = await API.get('/user/profile', true);
+    _profileData = u;
+
+    // Sidebar
+    var initials = (((u.first_name||'')[0]||'') + ((u.last_name||'')[0]||'')).toUpperCase();
+    document.getElementById('adminAvatarPh').textContent = initials;
+    document.getElementById('adminName').textContent = [u.first_name, u.last_name].filter(Boolean).join(' ');
+
+    // Render view card
+    var avatarHtml;
+    if (u.avatar) {
+      var src = u.avatar.startsWith('/') ? u.avatar : '/uploads/' + u.avatar;
+      avatarHtml = '<img src="' + src + '" alt="Аватар" style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid var(--primary)">';
+    } else {
+      avatarHtml = '<div class="cabinet-avatar-placeholder" style="width:90px;height:90px;font-size:1.5rem;line-height:90px;text-align:center;border:3px solid var(--primary)">' + esc(initials) + '</div>';
+    }
+
+    var metaItems = '';
+    if (u.email)      metaItems += '<div class="profile-meta-item"><i class="fa-solid fa-envelope"></i>' + esc(u.email) + '</div>';
+    if (u.phone)      metaItems += '<div class="profile-meta-item"><i class="fa-solid fa-phone"></i>' + esc(u.phone) + '</div>';
+    if (u.city || u.country) {
+      var loc = [u.city, u.country].filter(Boolean).map(esc).join(', ');
+      metaItems += '<div class="profile-meta-item"><i class="fa-solid fa-location-dot"></i>' + loc + '</div>';
+    }
+    if (u.birth_date) metaItems += '<div class="profile-meta-item"><i class="fa-solid fa-cake-candles"></i>' + formatDate(u.birth_date) + '</div>';
+    if (u.created_at) metaItems += '<div class="profile-meta-item"><i class="fa-regular fa-calendar"></i>З нами з ' + formatDate(u.created_at) + '</div>';
+
+    document.getElementById('profileViewCard').innerHTML =
+      '<div style="display:flex;align-items:flex-start;gap:1.5rem;flex-wrap:wrap">' +
+        '<div>' + avatarHtml + '</div>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="font-size:1.5rem;font-weight:800;margin-bottom:.25rem">' + esc(u.first_name) + ' ' + esc(u.last_name) + '</div>' +
+          '<span class="badge badge-danger" style="margin-bottom:.75rem">Адміністратор</span>' +
+          '<div class="profile-info-grid" style="margin-top:.75rem">' + metaItems + '</div>' +
+          (u.bio ? '<p style="margin-top:.75rem;color:var(--text-muted);font-style:italic;font-size:.9rem">' + esc(u.bio) + '</p>' : '') +
+        '</div>' +
+      '</div>';
+  } catch(err) {
+    showToast('Помилка завантаження профілю', 'error');
+  }
+}
+
+document.getElementById('profileForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  var btn = document.getElementById('profileSaveBtn');
+  btn.disabled = true;
+  try {
+    var fd = new FormData();
+    fd.append('first_name', document.getElementById('pFirstName').value.trim());
+    fd.append('last_name',  document.getElementById('pLastName').value.trim());
+    fd.append('phone',      document.getElementById('pPhone').value.trim());
+    fd.append('birth_date', document.getElementById('pBirth').value);
+    fd.append('city',       document.getElementById('pCity').value.trim());
+    fd.append('country',    document.getElementById('pCountry').value.trim());
+    fd.append('bio',        document.getElementById('pBio').value.trim());
+
+    var headers = { 'Authorization': 'Bearer ' + Auth.getToken() };
+    var res = await fetch('/api/user/profile', { method: 'PUT', headers, body: fd });
+    var data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    var stored = Auth.getUser();
+    if (stored) {
+      stored.first_name = fd.get('first_name');
+      stored.last_name  = fd.get('last_name');
+      Auth.setSession(Auth.getToken(), stored);
+    }
+
+    showToast('Профіль оновлено!', 'success');
+    exitEditMode();
+    await loadProfile();
+  } catch(err) {
+    showToast(err.message || 'Помилка збереження', 'error');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+document.getElementById('pwForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  var newPw   = document.getElementById('pwNew').value;
+  var confirm = document.getElementById('pwConfirm').value;
+  if (newPw !== confirm) { showToast('Паролі не співпадають', 'error'); return; }
+  try {
+    await API.put('/auth/change-password', {
+      current_password: document.getElementById('pwCurrent').value,
+      new_password: newPw
+    }, true);
+    showToast('Пароль змінено!', 'success');
+    document.getElementById('pwForm').reset();
+  } catch(err) {
+    showToast(err.message || 'Помилка зміни пароля', 'error');
+  }
+});
+
+loadProfile();
+</script>
+</body>
+</html>

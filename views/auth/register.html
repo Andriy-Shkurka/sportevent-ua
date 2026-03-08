@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Реєстрація | СпортUA</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    body { justify-content: center; align-items: center; min-height: 100vh; background: var(--bg); padding: 2rem 0; }
+    .auth-wrap { width: 100%; max-width: 520px; padding: 1rem; }
+    .auth-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 2.5rem 2rem; }
+    .auth-logo { text-align: center; margin-bottom: 1.5rem; }
+    .auth-title { text-align: center; margin-bottom: 2rem; }
+    .auth-title h1 { font-size: 1.75rem; margin-bottom: .5rem; }
+    .auth-footer { text-align: center; margin-top: 1.5rem; font-size: .875rem; color: var(--text-muted); }
+    .auth-footer a { color: var(--primary); }
+    .pw-wrap { position: relative; }
+    .pw-wrap input { padding-right: 2.75rem; }
+    .pw-toggle { position: absolute; right: .75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; }
+    .role-select { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+    .role-option { border: 2px solid var(--border); border-radius: var(--radius-sm); padding: 1rem; cursor: pointer; transition: var(--transition); text-align: center; }
+    .role-option:hover { border-color: var(--primary); }
+    .role-option.selected { border-color: var(--primary); background: rgba(230,57,70,.08); }
+    .role-option .role-icon { font-size: 1.75rem; margin-bottom: .5rem; }
+    .role-option .role-title { font-weight: 700; font-size: .9rem; }
+    .role-option .role-desc { font-size: .75rem; color: var(--text-muted); margin-top: .25rem; }
+    .pw-strength { height: 3px; background: var(--border); border-radius: 2px; margin-top: .35rem; overflow: hidden; }
+    .pw-strength-bar { height: 100%; border-radius: 2px; transition: all .3s; width: 0; }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .team-fields-wrap { animation: slideDown .25s ease; }
+    .team-fields-divider { border: none; border-top: 1px solid var(--border); margin: 1rem 0 1.25rem; }
+    .team-fields-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); margin-bottom: .75rem; }
+    .members-counter-wrap { display:flex; align-items:center; gap:.75rem; margin-top:.35rem; }
+    .members-counter-btn { width:32px; height:32px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--bg-card2); color:var(--text); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:var(--transition); flex-shrink:0; }
+    .members-counter-btn:hover:not(:disabled) { border-color:var(--primary); color:var(--primary); }
+    .members-counter-btn:disabled { opacity:.4; cursor:not-allowed; }
+    .members-counter-num { font-size:1.1rem; font-weight:700; min-width:2.5ch; text-align:center; }
+    .members-container { display:flex; flex-direction:column; gap:.375rem; margin-bottom:.5rem; }
+    .member-row { display:grid; grid-template-columns:1.25rem 1fr 1fr auto; gap:.5rem; align-items:center; padding:.5rem .625rem; background:var(--bg-card2); border-radius:var(--radius-sm); border:1px solid var(--border); transition:var(--transition); }
+    .member-row.captain-selected { border-color:var(--primary); background:rgba(230,57,70,.07); }
+    .member-num { font-size:.72rem; font-weight:700; color:var(--text-muted); text-align:center; }
+    .captain-btn { display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; padding:0 .125rem; }
+    .captain-btn input[type=radio] { accent-color:var(--primary); cursor:pointer; width:14px; height:14px; }
+    .captain-btn-label { font-size:.62rem; color:var(--text-muted); user-select:none; white-space:nowrap; }
+    .form-control.is-invalid { border-color: var(--error) !important; background: rgba(248,81,73,.04); }
+    .field-error-msg { color: var(--error); font-size: .76rem; margin-top: .3rem; display:flex; align-items:center; gap:.3rem; }
+    .field-error-msg::before { content:''; display:inline-block; width:4px; height:4px; border-radius:50%; background:var(--error); flex-shrink:0; }
+    .member-row.is-invalid { border-color: var(--error) !important; background: rgba(248,81,73,.06) !important; }
+  </style>
+</head>
+<body>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="auth-wrap">
+  <div class="auth-logo">
+    <a href="/" class="logo" style="display:inline-flex;text-decoration:none">
+      <div class="logo-icon">&#9889;</div>
+      Спорт<span>UA</span>
+    </a>
+  </div>
+
+  <div class="auth-card">
+    <div class="auth-title">
+      <h1>Реєстрація</h1>
+      <p style="color:var(--text-muted);font-size:.9rem">Створіть акаунт, щоб брати участь у заходах</p>
+    </div>
+
+    <div id="errorAlert" class="alert alert-error mb-3 hidden">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <span id="errorMsg"></span>
+    </div>
+
+    <form id="registerForm" novalidate>
+      <!-- Role selection -->
+      <div class="form-group">
+        <label class="form-label">Тип акаунту <span class="required">*</span></label>
+        <div class="role-select">
+          <div class="role-option selected" data-role="2">
+            <div class="role-icon">&#127939;</div>
+            <div class="role-title">Спортсмен</div>
+            <div class="role-desc">Індивідуальна участь у змаганнях</div>
+          </div>
+          <div class="role-option" data-role="3">
+            <div class="role-icon">&#129309;</div>
+            <div class="role-title">Команда</div>
+            <div class="role-desc">Командні змагання та виступи</div>
+          </div>
+        </div>
+        <input type="hidden" id="role_id" value="2">
+      </div>
+
+      <!-- Team fields (shown only when Команда is selected) -->
+      <div id="teamFields" class="team-fields-wrap" style="display:none">
+        <hr class="team-fields-divider">
+        <p class="team-fields-label">&#128101; Інформація про команду</p>
+        <div class="form-group">
+          <label class="form-label" for="team_name">Назва команди <span class="required">*</span></label>
+          <input class="form-control" type="text" id="team_name" name="team_name" placeholder="Наприклад: FC Зоря">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Кількість учасників <span class="required">*</span></label>
+          <div class="members-counter-wrap">
+            <button type="button" id="membersDecBtn" class="members-counter-btn" aria-label="Зменшити">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <span id="membersCountDisplay" class="members-counter-num">2</span>
+            <button type="button" id="membersIncBtn" class="members-counter-btn" aria-label="Збільшити">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+          </div>
+          <div class="form-hint" style="margin-top:.35rem">Оберіть одного учасника як капітана команди</div>
+        </div>
+        <div id="membersContainer" class="members-container"></div>
+        <hr class="team-fields-divider">
+      </div>
+
+      <!-- Athlete name fields (hidden when Team is selected) -->
+      <div id="athleteFields">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="first_name">Ім'я <span class="required">*</span></label>
+            <input class="form-control" type="text" id="first_name" name="first_name" placeholder="Іван" required autocomplete="given-name">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="last_name">Прізвище <span class="required">*</span></label>
+            <input class="form-control" type="text" id="last_name" name="last_name" placeholder="Петренко" required autocomplete="family-name">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="email">Email <span class="required">*</span></label>
+        <input class="form-control" type="email" id="email" name="email" placeholder="your@email.com" required autocomplete="email">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="phone">Телефон</label>
+          <input class="form-control" type="tel" id="phone" name="phone" placeholder="+380XXXXXXXXX" autocomplete="tel">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="city">Місто</label>
+          <input class="form-control" type="text" id="city" name="city" placeholder="Київ" autocomplete="address-level2">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Пароль <span class="required">*</span></label>
+        <div class="pw-wrap">
+          <input class="form-control" type="password" id="password" name="password" placeholder="Мінімум 8 символів" required autocomplete="new-password" oninput="checkStrength(this.value)">
+          <button type="button" class="pw-toggle" id="pwToggle1" aria-label="Показати пароль">
+            <svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg class="eye-off-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          </button>
+        </div>
+        <div class="pw-strength"><div class="pw-strength-bar" id="strengthBar"></div></div>
+        <div class="form-hint" id="strengthLabel"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="confirm_password">Підтвердження пароля <span class="required">*</span></label>
+        <div class="pw-wrap">
+          <input class="form-control" type="password" id="confirm_password" name="confirm_password" placeholder="Повторіть пароль" required autocomplete="new-password">
+          <button type="button" class="pw-toggle" id="pwToggle2" aria-label="Показати пароль">
+            <svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg class="eye-off-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group" style="display:flex;align-items:flex-start;gap:.75rem">
+        <input type="checkbox" id="agree" style="margin-top:.2rem;width:16px;height:16px;accent-color:var(--primary)">
+        <label for="agree" style="font-size:.85rem;color:var(--text-muted);cursor:pointer">
+          Я погоджуюсь з <a href="/rules" style="color:var(--primary)">правилами участі</a> та обробкою персональних даних
+        </label>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full btn-lg" id="submitBtn">
+        <span id="submitText">Зареєструватись</span>
+        <span id="submitLoader" class="hidden"><div class="spinner spinner-sm" style="border-color:rgba(255,255,255,.3);border-top-color:#fff"></div></span>
+      </button>
+    </form>
+
+    <p class="auth-footer">
+      Вже є акаунт? <a href="/login">Увійти</a>
+    </p>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+if (Auth.isLoggedIn()) {
+  window.location.href = Auth.isAdmin() ? '/admin' : '/cabinet';
+}
+
+var membersCount = 2;
+var MAX_MEMBERS = 30;
+
+function createMemberRow(index) {
+  var row = document.createElement('div');
+  row.className = 'member-row' + (index === 0 ? ' captain-selected' : '');
+  row.dataset.index = index;
+
+  var numSpan = document.createElement('span');
+  numSpan.className = 'member-num';
+  numSpan.textContent = index + 1;
+
+  var fnInput = document.createElement('input');
+  fnInput.type = 'text'; fnInput.className = 'form-control';
+  fnInput.style.cssText = 'font-size:.875rem;padding:.45rem .625rem';
+  fnInput.placeholder = "Ім'я"; fnInput.required = true;
+
+  var lnInput = document.createElement('input');
+  lnInput.type = 'text'; lnInput.className = 'form-control';
+  lnInput.style.cssText = 'font-size:.875rem;padding:.45rem .625rem';
+  lnInput.placeholder = 'Прізвище'; lnInput.required = true;
+
+  var radio = document.createElement('input');
+  radio.type = 'radio'; radio.name = 'captain_idx';
+  radio.value = index; radio.checked = (index === 0);
+
+  var captainLabel = document.createElement('label');
+  captainLabel.className = 'captain-btn';
+  var captainText = document.createElement('span');
+  captainText.className = 'captain-btn-label';
+  captainText.textContent = 'Капітан';
+  captainLabel.appendChild(radio);
+  captainLabel.appendChild(captainText);
+
+  radio.addEventListener('change', function() {
+    document.querySelectorAll('#membersContainer .member-row').forEach(function(r) {
+      r.classList.remove('captain-selected');
+    });
+    row.classList.add('captain-selected');
+  });
+
+  row.appendChild(numSpan);
+  row.appendChild(fnInput);
+  row.appendChild(lnInput);
+  row.appendChild(captainLabel);
+  return row;
+}
+
+function renderMembers() {
+  var container = document.getElementById('membersContainer');
+  var existing = container.querySelectorAll('.member-row');
+  var currentCount = existing.length;
+  if (membersCount > currentCount) {
+    for (var i = currentCount; i < membersCount; i++) {
+      container.appendChild(createMemberRow(i));
+    }
+  } else {
+    Array.from(existing).slice(membersCount).forEach(function(node) {
+      container.removeChild(node);
+    });
+  }
+  document.getElementById('membersCountDisplay').textContent = membersCount;
+  document.getElementById('membersDecBtn').disabled = membersCount <= 2;
+  document.getElementById('membersIncBtn').disabled = membersCount >= MAX_MEMBERS;
+}
+
+function setRole(roleId) {
+  document.getElementById('role_id').value = roleId;
+  var teamFields    = document.getElementById('teamFields');
+  var athleteFields = document.getElementById('athleteFields');
+  var teamName      = document.getElementById('team_name');
+  var firstName     = document.getElementById('first_name');
+  var lastName      = document.getElementById('last_name');
+  if (roleId === '3') {
+    teamFields.style.display    = 'block';
+    athleteFields.style.display = 'none';
+    teamName.required  = true;
+    firstName.required = false;
+    lastName.required  = false;
+    if (document.getElementById('membersContainer').children.length === 0) {
+      renderMembers();
+    }
+  } else {
+    teamFields.style.display    = 'none';
+    athleteFields.style.display = '';
+    teamName.required  = false;
+    teamName.value     = '';
+    firstName.required = true;
+    lastName.required  = true;
+    membersCount = 2;
+    document.getElementById('membersContainer').innerHTML = '';
+    document.getElementById('membersCountDisplay').textContent = '2';
+  }
+}
+
+document.getElementById('membersDecBtn').addEventListener('click', function() {
+  if (membersCount > 2) { membersCount--; renderMembers(); }
+});
+document.getElementById('membersIncBtn').addEventListener('click', function() {
+  if (membersCount < MAX_MEMBERS) { membersCount++; renderMembers(); }
+});
+
+document.querySelectorAll('.role-option').forEach(function(el) {
+  el.addEventListener('click', function() {
+    document.querySelectorAll('.role-option').forEach(function(r) { r.classList.remove('selected'); });
+    this.classList.add('selected');
+    setRole(this.dataset.role);
+  });
+});
+
+function setupPwToggle(btnId, inputId) {
+  document.getElementById(btnId).addEventListener('click', function() {
+    var input = document.getElementById(inputId);
+    var isText = input.type === 'text';
+    input.type = isText ? 'password' : 'text';
+    this.querySelector('.eye-icon').style.display = isText ? '' : 'none';
+    this.querySelector('.eye-off-icon').style.display = isText ? 'none' : '';
+  });
+}
+setupPwToggle('pwToggle1', 'password');
+setupPwToggle('pwToggle2', 'confirm_password');
+
+function checkStrength(pw) {
+  var bar = document.getElementById('strengthBar');
+  var label = document.getElementById('strengthLabel');
+  if (!pw) { bar.style.width = '0'; label.textContent = ''; return; }
+  var score = 0;
+  if (pw.length >= 8) score++;
+  if (pw.length >= 12) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  var levels = [
+    { w: '20%', c: 'var(--error)',   t: 'Дуже слабкий' },
+    { w: '40%', c: 'var(--error)',   t: 'Слабкий' },
+    { w: '60%', c: 'var(--warning)', t: 'Середній' },
+    { w: '80%', c: 'var(--info)',    t: 'Хороший' },
+    { w: '100%',c: 'var(--success)', t: 'Відмінний' }
+  ];
+  var l = levels[Math.min(score - 1, 4)] || levels[0];
+  bar.style.width = l.w;
+  bar.style.background = l.c;
+  label.textContent = l.t;
+  label.style.color = l.c;
+}
+
+function showError(msg) {
+  var el = document.getElementById('errorAlert');
+  document.getElementById('errorMsg').textContent = msg;
+  el.classList.remove('hidden');
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function setFieldError(inputEl, msg) {
+  inputEl.classList.add('is-invalid');
+  var formGroup = inputEl.closest('.form-group') || inputEl.parentNode;
+  var existing = formGroup.querySelector('.field-error-msg');
+  if (existing) existing.remove();
+  var errEl = document.createElement('div');
+  errEl.className = 'field-error-msg';
+  errEl.textContent = msg;
+  formGroup.appendChild(errEl);
+  inputEl.addEventListener('input', function() {
+    inputEl.classList.remove('is-invalid');
+    var e = formGroup.querySelector('.field-error-msg');
+    if (e) e.remove();
+  }, { once: true });
+}
+
+function clearAllFieldErrors() {
+  document.querySelectorAll('.is-invalid').forEach(function(el) { el.classList.remove('is-invalid'); });
+  document.querySelectorAll('.field-error-msg').forEach(function(el) { el.remove(); });
+  document.getElementById('errorAlert').classList.add('hidden');
+}
+
+function isValidEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v); }
+
+// Real-time email validation on blur
+document.getElementById('email').addEventListener('blur', function() {
+  var v = this.value.trim();
+  if (v && !isValidEmail(v)) setFieldError(this, 'Введіть коректний email (наприклад: ivan@gmail.com)');
+});
+
+// Real-time confirm password on blur
+document.getElementById('confirm_password').addEventListener('blur', function() {
+  var pw = document.getElementById('password').value;
+  if (this.value && this.value !== pw) setFieldError(this, 'Паролі не співпадають');
+});
+
+document.getElementById('registerForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  clearAllFieldErrors();
+
+  var emailEl    = document.getElementById('email');
+  var passwordEl = document.getElementById('password');
+  var confirmEl  = document.getElementById('confirm_password');
+  var emailVal   = emailEl.value.trim();
+  var passwordVal = passwordEl.value;
+  var agree      = document.getElementById('agree').checked;
+  var roleId     = parseInt(document.getElementById('role_id').value);
+  var hasError   = false;
+
+  // Athlete fields
+  if (roleId === 2) {
+    var fnEl = document.getElementById('first_name');
+    var lnEl = document.getElementById('last_name');
+    if (!fnEl.value.trim()) { setFieldError(fnEl, "Ім'я обов'язкове"); hasError = true; }
+    else if (fnEl.value.trim().length < 2) { setFieldError(fnEl, "Ім'я занадто коротке"); hasError = true; }
+    if (!lnEl.value.trim()) { setFieldError(lnEl, 'Прізвище обов\'язкове'); hasError = true; }
+    else if (lnEl.value.trim().length < 2) { setFieldError(lnEl, 'Прізвище занадто коротке'); hasError = true; }
+  }
+
+  // Team fields
+  if (roleId === 3) {
+    var teamNameEl = document.getElementById('team_name');
+    if (!teamNameEl.value.trim()) { setFieldError(teamNameEl, 'Вкажіть назву команди'); hasError = true; }
+    else if (teamNameEl.value.trim().length < 2) { setFieldError(teamNameEl, 'Назва команди занадто коротка'); hasError = true; }
+
+    var memberRows = document.querySelectorAll('#membersContainer .member-row');
+    var captainChecked = document.querySelector('input[name="captain_idx"]:checked');
+    if (!captainChecked) {
+      document.getElementById('membersContainer').insertAdjacentHTML('afterend',
+        '<div class="field-error-msg" style="margin-top:.25rem">Оберіть капітана команди</div>');
+      hasError = true;
+    }
+    memberRows.forEach(function(row, i) {
+      var inputs = row.querySelectorAll('input[type=text]');
+      var fnEmpty = !inputs[0].value.trim();
+      var lnEmpty = !inputs[1].value.trim();
+      if (fnEmpty || lnEmpty) {
+        row.classList.add('is-invalid');
+        if (fnEmpty) inputs[0].classList.add('is-invalid');
+        if (lnEmpty) inputs[1].classList.add('is-invalid');
+        // clear on fix
+        Array.from(inputs).forEach(function(inp) {
+          inp.addEventListener('input', function() {
+            inp.classList.remove('is-invalid');
+            if (!inputs[0].classList.contains('is-invalid') && !inputs[1].classList.contains('is-invalid')) {
+              row.classList.remove('is-invalid');
+            }
+          }, { once: true });
+        });
+        hasError = true;
+      }
+    });
+    if (hasError && document.querySelectorAll('#membersContainer .is-invalid').length) {
+      document.getElementById('membersContainer').insertAdjacentHTML('afterend',
+        '<div class="field-error-msg" style="margin-top:.25rem">Заповніть ім\'я та прізвище всіх учасників (виділено червоним)</div>');
+    }
+  }
+
+  // Email
+  if (!emailEl.value.trim()) { setFieldError(emailEl, 'Email обов\'язковий'); hasError = true; }
+  else if (!isValidEmail(emailEl.value.trim())) { setFieldError(emailEl, 'Введіть коректний email (наприклад: ivan@gmail.com)'); hasError = true; }
+
+  // Password
+  if (!passwordEl.value) { setFieldError(passwordEl, 'Пароль обов\'язковий'); hasError = true; }
+  else if (passwordEl.value.length < 8) { setFieldError(passwordEl, 'Пароль має містити мінімум 8 символів'); hasError = true; }
+
+  // Confirm password
+  if (!confirmEl.value) { setFieldError(confirmEl, 'Підтвердіть пароль'); hasError = true; }
+  else if (confirmEl.value !== passwordEl.value) { setFieldError(confirmEl, 'Паролі не співпадають'); hasError = true; }
+
+  // Agree
+  if (!agree) { showError('Необхідно погодитись з правилами участі'); hasError = true; }
+
+  if (hasError) {
+    var firstInvalid = document.querySelector('.is-invalid, #errorAlert:not(.hidden)');
+    if (firstInvalid) firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  var btn    = document.getElementById('submitBtn');
+  var text   = document.getElementById('submitText');
+  var loader = document.getElementById('submitLoader');
+  btn.disabled = true;
+  text.classList.add('hidden');
+  loader.classList.remove('hidden');
+
+  try {
+    var body = {
+      email:    emailVal,
+      password: passwordVal,
+      phone:    document.getElementById('phone').value.trim() || undefined,
+      city:     document.getElementById('city').value.trim() || undefined,
+      role_id:  roleId
+    };
+    if (roleId === 2) {
+      body.first_name = document.getElementById('first_name').value.trim();
+      body.last_name  = document.getElementById('last_name').value.trim();
+    }
+    if (roleId === 3) {
+      body.team_name = document.getElementById('team_name').value.trim();
+      var captainIdx = parseInt(document.querySelector('input[name="captain_idx"]:checked').value);
+      body.members = Array.from(document.querySelectorAll('#membersContainer .member-row')).map(function(row, i) {
+        var inputs = row.querySelectorAll('input[type=text]');
+        return { first_name: inputs[0].value.trim(), last_name: inputs[1].value.trim(), is_captain: i === captainIdx };
+      });
+    }
+    var data = await API.post('/auth/register', body);
+    Auth.setSession(data.token, data.user);
+    showToast('Реєстрацію успішно завершено!', 'success');
+    setTimeout(function() { window.location.href = '/cabinet'; }, 700);
+  } catch(err) {
+    showError(err.message || 'Помилка реєстрації');
+    btn.disabled = false;
+    text.classList.remove('hidden');
+    loader.classList.add('hidden');
+  }
+});
+</script>
+</body>
+</html>
