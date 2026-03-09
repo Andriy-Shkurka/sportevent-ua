@@ -13,13 +13,14 @@ class News {
 
     const [rows] = await pool.execute(
       `SELECT n.id, n.title, n.slug, n.excerpt, n.cover_image, n.category, n.status,
-              n.views, n.is_featured, n.published_at, n.created_at,
+              n.views, n.is_featured, n.created_at,
+              COALESCE(n.published_at, n.created_at) as published_at,
               u.first_name as author_first, u.last_name as author_last,
               e.title as event_title, e.slug as event_slug
        FROM news n
        JOIN users u ON n.author_id = u.id
        LEFT JOIN events e ON n.event_id = e.id
-       ${where} ORDER BY n.published_at DESC, n.created_at DESC LIMIT ? OFFSET ?`,
+       ${where} ORDER BY COALESCE(n.published_at, n.created_at) DESC LIMIT ? OFFSET ?`,
       [...params, limit, offset]
     );
 

@@ -106,6 +106,12 @@ UPDATE faq SET
   answer   = 'Зв''язатися з організаторами можна через форму зворотного зв''язку на сторінці "Контакти".'
 WHERE sort_order = 6;
 
+-- =============================================
+-- NEWS — виправлення NULL published_at
+-- =============================================
+UPDATE news SET published_at = created_at
+WHERE published_at IS NULL AND status = 'published';
+
 -- Перевірка результату
 SELECT 'disciplines' as "table", count(*) as "rows" FROM disciplines
 UNION ALL

@@ -380,7 +380,7 @@ function animateCount(id, target, duration) {
             '<div class="news-card-category">' + (NEWS_CATEGORIES[n.category] || n.category) + '</div>' +
             '<h3>' + n.title + '</h3>' +
             '<p>' + (n.excerpt || '') + '</p>' +
-            '<div class="news-card-footer"><span>' + formatDate(n.published_at) + '</span><span style="color:var(--primary)">Читати &#8594;</span></div>' +
+            '<div class="news-card-footer"><span>' + formatDate(n.published_at || n.created_at) + '</span><span style="color:var(--primary)">Читати &#8594;</span></div>' +
           '</div>' +
         '</a>';
       }).join('');

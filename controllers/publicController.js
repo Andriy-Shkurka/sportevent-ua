@@ -60,9 +60,10 @@ async function getNewsBySlug(req, res) {
     }
 
     const [related] = await pool.execute(
-      `SELECT id, title, slug, cover_image, published_at, category
+      `SELECT id, title, slug, cover_image, category,
+              COALESCE(published_at, created_at) as published_at
        FROM news WHERE status = 'published' AND id != ? AND category = ?
-       ORDER BY published_at DESC LIMIT 3`,
+       ORDER BY COALESCE(published_at, created_at) DESC LIMIT 3`,
       [article.id, article.category]
     );
 
@@ -223,9 +224,10 @@ async function getHomeData(req, res) {
     `);
 
     const [latestNews] = await pool.execute(`
-      SELECT id, title, slug, excerpt, cover_image, category, published_at
+      SELECT id, title, slug, excerpt, cover_image, category,
+             COALESCE(published_at, created_at) as published_at
       FROM news WHERE status = 'published'
-      ORDER BY published_at DESC LIMIT 3
+      ORDER BY COALESCE(published_at, created_at) DESC LIMIT 3
     `);
 
     const [[stats]] = await pool.execute(`
