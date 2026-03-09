@@ -291,16 +291,25 @@ async function getEvents(req, res) {
 async function resolveLocation(body) {
   const { location_city, location_address } = body;
   if (!location_city) return;
-  const [existing] = await pool.execute(
-    'SELECT id FROM locations WHERE city = ? AND (address = ? OR (address IS NULL AND ? IS NULL))',
-    [location_city, location_address || null, location_address || null]
-  );
+  const addr = location_address || null;
+
+  // PostgreSQL: IS NOT DISTINCT FROM handles NULL-safe equality with only 2 params
+  // ($3 IS NULL causes "could not determine data type" in PG)
+  // MySQL: classic 3-param pattern
+  const [existing] = pool.isPg
+    ? await pool.execute(
+        'SELECT id FROM locations WHERE city = ? AND address IS NOT DISTINCT FROM ?',
+        [location_city, addr])
+    : await pool.execute(
+        'SELECT id FROM locations WHERE city = ? AND (address = ? OR (address IS NULL AND ? IS NULL))',
+        [location_city, addr, addr]);
+
   if (existing.length) {
     body.location_id = existing[0].id;
   } else {
     const [result] = await pool.execute(
       'INSERT INTO locations (name, city, address, country) VALUES (?, ?, ?, ?)',
-      [location_city, location_city, location_address || null, 'Україна']
+      [location_city, location_city, addr, 'Україна']
     );
     body.location_id = result.insertId;
   }
