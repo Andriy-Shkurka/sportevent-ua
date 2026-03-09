@@ -53,13 +53,17 @@ async function updateProfile(req, res) {
     const allowed = ['first_name', 'last_name', 'phone', 'birth_date', 'city', 'country', 'bio'];
     const data = {};
     for (const key of allowed) {
-      if (req.body[key] !== undefined) data[key] = req.body[key];
+      if (req.body[key] !== undefined) {
+        // PostgreSQL DATE column rejects empty strings → convert to null
+        data[key] = req.body[key] === '' ? null : req.body[key];
+      }
     }
     if (req.file) data.avatar = `/images/uploads/${req.file.filename}`;
     await User.update(req.user.id, data);
     res.json({ message: 'Профіль оновлено' });
   } catch (err) {
-    res.status(500).json({ error: 'Помилка оновлення профілю' });
+    console.error('updateProfile error:', err.message);
+    res.status(500).json({ error: 'Помилка оновлення профілю', detail: err.message });
   }
 }
 

@@ -174,11 +174,16 @@ async function getUser(req, res) {
 
 async function updateUser(req, res) {
   try {
+    // Normalize empty strings to null (PostgreSQL strict typing for DATE etc.)
+    const nullFields = ['birth_date', 'phone', 'city', 'country', 'bio'];
+    for (const k of nullFields) {
+      if (req.body[k] === '') req.body[k] = null;
+    }
     await User.update(req.params.id, req.body);
     if (req.body.role_id) await User.updateRole(req.params.id, req.body.role_id);
     res.json({ message: 'Користувача оновлено' });
   } catch (err) {
-    res.status(500).json({ error: 'Помилка оновлення' });
+    res.status(500).json({ error: 'Помилка оновлення', detail: err.message });
   }
 }
 
@@ -275,10 +280,26 @@ async function resolveLocation(body) {
   }
 }
 
+/** Convert empty strings to null for date/numeric fields (PostgreSQL strict typing) */
+function normalizeEventBody(body) {
+  const nullIfEmpty = ['end_date', 'registration_deadline', 'max_participants',
+                       'min_age', 'max_age', 'entry_fee', 'prize_pool', 'location_city', 'location_address'];
+  for (const k of nullIfEmpty) {
+    if (body[k] === '') body[k] = null;
+  }
+  if (body.is_featured !== undefined) {
+    body.is_featured = body.is_featured === true || body.is_featured === 'true' || body.is_featured === '1';
+  }
+  if (body.max_participants) body.max_participants = parseInt(body.max_participants) || null;
+  if (body.entry_fee !== null && body.entry_fee !== undefined) body.entry_fee = parseFloat(body.entry_fee) || 0;
+  return body;
+}
+
 async function createEvent(req, res) {
   try {
     req.body.created_by = req.user.id;
     if (req.file) req.body.cover_image = `/images/uploads/${req.file.filename}`;
+    normalizeEventBody(req.body);
     await resolveLocation(req.body);
     const id = await Event.create(req.body);
     res.status(201).json({ message: 'Захід створено', id });
@@ -296,10 +317,12 @@ async function updateEvent(req, res) {
     } else if (req.body.remove_cover === '1') {
       req.body.cover_image = null;
     }
+    normalizeEventBody(req.body);
     await resolveLocation(req.body);
     await Event.update(req.params.id, req.body);
     res.json({ message: 'Захід оновлено' });
   } catch (err) {
+    console.error('Update event error:', err.message);
     res.status(500).json({ error: 'Помилка оновлення заходу', detail: err.message });
   }
 }

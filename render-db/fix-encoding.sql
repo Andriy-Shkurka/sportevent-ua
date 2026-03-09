@@ -60,7 +60,8 @@ WHERE id = 4;
 UPDATE users SET
   first_name = 'Адміністратор',
   last_name  = 'Системи',
-  city       = 'Київ'
+  city       = 'Київ',
+  country    = 'Україна'
 WHERE email = 'admin@sportevent.ua';
 
 -- =============================================
