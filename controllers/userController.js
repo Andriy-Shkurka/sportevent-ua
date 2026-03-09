@@ -58,7 +58,7 @@ async function updateProfile(req, res) {
         data[key] = req.body[key] === '' ? null : req.body[key];
       }
     }
-    if (req.file) data.avatar = `/images/uploads/${req.file.filename}`;
+    if (req.file) data.avatar = req.file.path; // Cloudinary secure URL
     await User.update(req.user.id, data);
     res.json({ message: 'Профіль оновлено' });
   } catch (err) {

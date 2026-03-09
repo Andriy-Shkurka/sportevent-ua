@@ -5,9 +5,17 @@ const Registration = require('../models/Registration');
 const Result = require('../models/Result');
 const { pool } = require('../config/database');
 const emailService = require('../services/emailService');
-const fs = require('fs');
-const path = require('path');
 const sharp = require('sharp');
+const cloudinary = require('../config/cloudinary');
+
+/* Extract Cloudinary public_id from a stored URL or path.
+   Returns null for legacy local paths (/images/...). */
+function getCloudinaryPublicId(urlOrPath) {
+  if (!urlOrPath || !urlOrPath.includes('cloudinary.com')) return null;
+  const match = urlOrPath.match(/\/upload\/(?:v\d+\/)?(.+)$/);
+  if (!match) return null;
+  return match[1].replace(/\.[^.]+$/, ''); // strip extension
+}
 
 // =============================================
 // DASHBOARD STATS
@@ -298,7 +306,7 @@ function normalizeEventBody(body) {
 async function createEvent(req, res) {
   try {
     req.body.created_by = req.user.id;
-    if (req.file) req.body.cover_image = `/images/uploads/${req.file.filename}`;
+    if (req.file) req.body.cover_image = req.file.path; // Cloudinary secure URL
     normalizeEventBody(req.body);
     await resolveLocation(req.body);
     const id = await Event.create(req.body);
@@ -313,7 +321,7 @@ async function createEvent(req, res) {
 async function updateEvent(req, res) {
   try {
     if (req.file) {
-      req.body.cover_image = `/images/uploads/${req.file.filename}`;
+      req.body.cover_image = req.file.path; // Cloudinary secure URL
     } else if (req.body.remove_cover === '1') {
       req.body.cover_image = null;
     }
@@ -352,7 +360,7 @@ async function getNews(req, res) {
 async function createNews(req, res) {
   try {
     req.body.author_id = req.user.id;
-    if (req.file) req.body.cover_image = `/images/uploads/${req.file.filename}`;
+    if (req.file) req.body.cover_image = req.file.path; // Cloudinary secure URL
     const id = await News.create(req.body);
     res.status(201).json({ message: 'Новину створено', id });
   } catch (err) {
@@ -362,7 +370,7 @@ async function createNews(req, res) {
 
 async function updateNews(req, res) {
   try {
-    if (req.file) req.body.cover_image = `/images/uploads/${req.file.filename}`;
+    if (req.file) req.body.cover_image = req.file.path; // Cloudinary secure URL
     await News.update(req.params.id, req.body);
     res.json({ message: 'Новину оновлено' });
   } catch (err) {
@@ -739,13 +747,11 @@ async function uploadMedia(req, res) {
       `INSERT INTO media (uploaded_by, event_id, news_id, file_name, file_path, file_type, mime_type, file_size, title, alt_text)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [req.user.id, event_id || null, news_id || null, req.file.originalname,
-       `/images/uploads/${req.file.filename}`, fileType, req.file.mimetype,
+       req.file.path,  // Cloudinary secure URL
+       fileType, req.file.mimetype,
        req.file.size, title || null, alt_text || null]
     );
-    res.status(201).json({
-      message: 'Файл завантажено',
-      path: `/images/uploads/${req.file.filename}`
-    });
+    res.status(201).json({ message: 'Файл завантажено', path: req.file.path });
   } catch (err) {
     res.status(500).json({ error: 'Помилка завантаження файлу' });
   }
@@ -756,9 +762,11 @@ async function deleteMedia(req, res) {
     const [[row]] = await pool.execute('SELECT file_path FROM media WHERE id = ?', [req.params.id]);
     if (!row) return res.status(404).json({ error: 'Файл не знайдено' });
     await pool.execute('DELETE FROM media WHERE id = ?', [req.params.id]);
-    // Delete physical file
-    const filePath = path.join(__dirname, '..', 'public', row.file_path);
-    fs.unlink(filePath, () => {}); // ignore error if file missing
+    // Delete from Cloudinary (skip legacy local paths)
+    const publicId = getCloudinaryPublicId(row.file_path);
+    if (publicId) {
+      try { await cloudinary.uploader.destroy(publicId); } catch (_) {}
+    }
     res.json({ message: 'Медіафайл видалено' });
   } catch (err) {
     res.status(500).json({ error: 'Помилка видалення медіафайлу' });
@@ -775,24 +783,34 @@ async function cropMedia(req, res) {
     if (!row) return res.status(404).json({ error: 'Файл не знайдено' });
     if (row.file_type !== 'image') return res.status(400).json({ error: 'Можна обрізати лише зображення' });
 
-    const filePath = path.join(__dirname, '..', 'public', row.file_path);
     const cropX = Math.max(0, Math.round(Number(x)));
     const cropY = Math.max(0, Math.round(Number(y)));
     const cropW = Math.max(1, Math.round(Number(width)));
     const cropH = Math.max(1, Math.round(Number(height)));
 
-    await sharp(filePath)
+    // Fetch image from Cloudinary URL, crop in-memory, re-upload
+    const response = await fetch(row.file_path);
+    if (!response.ok) throw new Error('Не вдалося завантажити зображення');
+    const arrayBuffer = await response.arrayBuffer();
+    const croppedBuffer = await sharp(Buffer.from(arrayBuffer))
       .extract({ left: cropX, top: cropY, width: cropW, height: cropH })
       .jpeg({ quality: 90 })
-      .toFile(filePath + '.tmp');
+      .toBuffer();
 
-    fs.renameSync(filePath + '.tmp', filePath);
+    // Re-upload to Cloudinary overwriting the original
+    const publicId = getCloudinaryPublicId(row.file_path);
+    const uploadResult = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { public_id: publicId, overwrite: true, invalidate: true, resource_type: 'image' },
+        (err, result) => err ? reject(err) : resolve(result)
+      );
+      stream.end(croppedBuffer);
+    });
 
-    // Update file_size in DB
-    const stat = fs.statSync(filePath);
-    await pool.execute('UPDATE media SET file_size = ? WHERE id = ?', [stat.size, req.params.id]);
+    await pool.execute('UPDATE media SET file_path = ?, file_size = ? WHERE id = ?',
+      [uploadResult.secure_url, croppedBuffer.length, req.params.id]);
 
-    res.json({ message: 'Зображення обрізано', path: row.file_path });
+    res.json({ message: 'Зображення обрізано', path: uploadResult.secure_url });
   } catch (err) {
     console.error('cropMedia error:', err);
     res.status(500).json({ error: 'Помилка обрізання зображення' });
