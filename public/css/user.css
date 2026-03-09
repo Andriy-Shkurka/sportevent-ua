@@ -313,9 +313,9 @@
 
 /* 2025 — unread: subtle glow on left border */
 .notification-item.unread {
-  background: rgba(230,57,70,.04);
+  background: rgba(37,99,235,.04);
   border-left: 2px solid var(--primary);
-  box-shadow: inset 3px 0 8px rgba(230,57,70,.1);
+  box-shadow: inset 3px 0 8px rgba(37,99,235,.1);
 }
 
 .notification-icon {
@@ -346,7 +346,7 @@
   background: var(--primary);
   margin-top: 6px;
   flex-shrink: 0;
-  box-shadow: 0 0 6px rgba(230,57,70,.55);
+  box-shadow: 0 0 6px rgba(37,99,235,.55);
 }
 
 /* =============================================
