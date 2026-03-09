@@ -7,6 +7,26 @@ function esc(s) {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+// ── Discipline icons ───────────────────────────
+var _DISC_ICONS = {
+  'athletics':           '🏃',
+  'swimming':            '🏊',
+  'football':            '⚽',
+  'mini-football':       '⚽',
+  'basketball':          '🏀',
+  'volleyball':          '🏐',
+  'tennis':              '🎾',
+  'table-tennis':        '🏓',
+  'wrestling':           '🤼',
+  'freestyle-wrestling': '🤼',
+  'boxing':              '🥊',
+  'cycling':             '🚴',
+  'gymnastics':          '🤸'
+};
+function getDisciplineIcon(slug) {
+  return _DISC_ICONS[slug] || '🏅';
+}
+
 // ── Auth ──────────────────────────────────────
 const Auth = {
   getToken() { return localStorage.getItem('token'); },

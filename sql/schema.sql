@@ -64,16 +64,20 @@ CREATE TABLE IF NOT EXISTS disciplines (
 );
 
 INSERT INTO disciplines (name, slug, description, icon) VALUES
-  ('Легка атлетика', 'athletics', 'Біг, стрибки, метання', 'icon-athletics'),
-  ('Плавання', 'swimming', 'Спортивне плавання', 'icon-swimming'),
-  ('Футбол', 'football', 'Ігровий вид спорту', 'icon-football'),
-  ('Баскетбол', 'basketball', 'Ігровий вид спорту', 'icon-basketball'),
-  ('Волейбол', 'volleyball', 'Ігровий вид спорту', 'icon-volleyball'),
-  ('Теніс', 'tennis', 'Великий теніс', 'icon-tennis'),
-  ('Борьба', 'wrestling', 'Вільна та греко-римська боротьба', 'icon-wrestling'),
-  ('Боксинг', 'boxing', 'Аматорський і профресійний боксинг', 'icon-boxing'),
-  ('Велоспорт', 'cycling', 'Шосейний та трековий велоспорт', 'icon-cycling'),
-  ('Гімнастика', 'gymnastics', 'Художня та спортивна гімнастика', 'icon-gymnastics');
+  ('Легка атлетика',         'athletics',           'Біг, стрибки, метання',                     'icon-athletics'),
+  ('Плавання',               'swimming',            'Спортивне плавання',                         'icon-swimming'),
+  ('Футбол',                 'football',            'Футбол 11×11 та міні-футбол (футзал)',        'icon-football'),
+  ('Баскетбол',              'basketball',          'Баскетбол 5×5 та стрітбол 3×3',              'icon-basketball'),
+  ('Волейбол',               'volleyball',          'Класичний та пляжний волейбол',               'icon-volleyball'),
+  ('Великий теніс',          'tennis',              'Лаун-теніс на відкритих і закритих кортах',   'icon-tennis'),
+  ('Греко-римська боротьба', 'wrestling',           'Класична греко-римська боротьба',             'icon-wrestling'),
+  ('Бокс',                   'boxing',              'Аматорський та професійний бокс',             'icon-boxing'),
+  ('Велоспорт',              'cycling',             'Шосейний, трековий та гірський велоспорт',    'icon-cycling'),
+  ('Художня гімнастика',     'gymnastics',          'Художня та спортивна гімнастика',             'icon-gymnastics'),
+  ('Вільна боротьба',        'freestyle-wrestling', 'Спортивна вільна боротьба',                   'icon-wrestling'),
+  ('Настільний теніс',       'table-tennis',        'Настільний теніс (пінг-понг)',                'icon-table-tennis'),
+  ('Міні-футбол',            'mini-football',       'Футзал — командний міні-футбол у залі',       'icon-football')
+ON DUPLICATE KEY UPDATE name=VALUES(name), description=VALUES(description);
 
 -- =============================================
 -- LOCATIONS / VENUES

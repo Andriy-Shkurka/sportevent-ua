@@ -144,7 +144,7 @@ async function loadEvents() {
         '</div>' +
         '<div class="event-card-body">' +
           '<div class="event-card-meta">' +
-            '<span class="badge badge-secondary">' + (e.discipline_name || '') + '</span>' +
+            '<span class="badge badge-secondary">' + getDisciplineIcon(e.discipline_slug) + ' ' + esc(e.discipline_name || '') + '</span>' +
             (e.participants_count ? '<span class="badge badge-muted"><i class="fa-solid fa-users"></i> ' + e.participants_count + '</span>' : '') +
           '</div>' +
           '<h3>' + e.title + '</h3>' +

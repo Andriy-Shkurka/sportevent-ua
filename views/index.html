@@ -268,7 +268,7 @@ function animateCount(id, target, duration) {
             '<div class="event-card-badge"><span class="badge status-' + e.status + '">' + (STATUS_LABELS[e.status] || e.status) + '</span></div>' +
           '</div>' +
           '<div class="event-card-body">' +
-            '<div class="event-card-meta"><span class="badge badge-secondary">' + e.discipline_name + '</span></div>' +
+            '<div class="event-card-meta"><span class="badge badge-secondary">' + getDisciplineIcon(e.discipline_slug) + ' ' + esc(e.discipline_name) + '</span></div>' +
             '<h3>' + e.title + '</h3>' +
             '<div class="event-card-info">' +
               '<span><i class="fa-regular fa-calendar" style="color:var(--primary)"></i> ' + formatDate(e.start_date) + '</span>' +

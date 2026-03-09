@@ -278,24 +278,29 @@ async function resolveLocation(body) {
 async function createEvent(req, res) {
   try {
     req.body.created_by = req.user.id;
+    if (req.file) req.body.cover_image = `/images/uploads/${req.file.filename}`;
     await resolveLocation(req.body);
     const id = await Event.create(req.body);
     res.status(201).json({ message: 'Захід створено', id });
   } catch (err) {
     console.error('Create event error:', err.message);
     console.error('Create event stack:', err.stack);
-    console.error('Create event body:', JSON.stringify(req.body));
     res.status(500).json({ error: 'Помилка створення заходу', detail: err.message });
   }
 }
 
 async function updateEvent(req, res) {
   try {
+    if (req.file) {
+      req.body.cover_image = `/images/uploads/${req.file.filename}`;
+    } else if (req.body.remove_cover === '1') {
+      req.body.cover_image = null;
+    }
     await resolveLocation(req.body);
     await Event.update(req.params.id, req.body);
     res.json({ message: 'Захід оновлено' });
   } catch (err) {
-    res.status(500).json({ error: 'Помилка оновлення заходу' });
+    res.status(500).json({ error: 'Помилка оновлення заходу', detail: err.message });
   }
 }
 

@@ -181,7 +181,7 @@ async function loadEvent() {
     html += '<div class="event-hero-overlay"></div>';
     html += '<div class="event-hero-content container">';
     html += '<div style="margin-bottom:.75rem"><a href="/events" style="color:var(--text-muted);font-size:.875rem"><i class="fa-solid fa-arrow-left"></i> Всі заходи</a></div>';
-    html += '<div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.75rem"><span class="badge status-' + event.status + '">' + (STATUS_LABELS[event.status]||event.status) + '</span><span class="badge badge-secondary">' + event.discipline_name + '</span></div>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.75rem"><span class="badge status-' + event.status + '">' + (STATUS_LABELS[event.status]||event.status) + '</span><span class="badge badge-secondary">' + getDisciplineIcon(event.discipline_slug) + ' ' + esc(event.discipline_name) + '</span></div>';
     html += '<h1 style="font-size:clamp(1.5rem,4vw,2.5rem);margin:0">' + event.title + '</h1>';
     html += '</div></div>';
 

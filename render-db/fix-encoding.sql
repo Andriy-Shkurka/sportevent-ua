@@ -8,16 +8,16 @@
 -- =============================================
 -- DISCIPLINES — виправлення назв та описів
 -- =============================================
-UPDATE disciplines SET name='Легка атлетика', description='Біг, стрибки, метання'          WHERE slug='athletics';
-UPDATE disciplines SET name='Плавання',       description='Спортивне плавання'              WHERE slug='swimming';
-UPDATE disciplines SET name='Футбол',         description='Ігровий вид спорту'             WHERE slug='football';
-UPDATE disciplines SET name='Баскетбол',      description='Ігровий вид спорту'             WHERE slug='basketball';
-UPDATE disciplines SET name='Волейбол',       description='Ігровий вид спорту'             WHERE slug='volleyball';
-UPDATE disciplines SET name='Теніс',          description='Великий теніс'                  WHERE slug='tennis';
-UPDATE disciplines SET name='Борьба',         description='Вільна та греко-римська боротьба' WHERE slug='wrestling';
-UPDATE disciplines SET name='Боксинг',        description='Аматорський і профресійний боксинг' WHERE slug='boxing';
-UPDATE disciplines SET name='Велоспорт',      description='Шосейний та трековий велоспорт' WHERE slug='cycling';
-UPDATE disciplines SET name='Гімнастика',     description='Художня та спортивна гімнастика' WHERE slug='gymnastics';
+UPDATE disciplines SET name='Легка атлетика',         description='Біг, стрибки, метання'                       WHERE slug='athletics';
+UPDATE disciplines SET name='Плавання',               description='Спортивне плавання'                            WHERE slug='swimming';
+UPDATE disciplines SET name='Футбол',                 description='Футбол 11×11 та міні-футбол (футзал)'         WHERE slug='football';
+UPDATE disciplines SET name='Баскетбол',              description='Баскетбол 5×5 та стрітбол 3×3'               WHERE slug='basketball';
+UPDATE disciplines SET name='Волейбол',               description='Класичний та пляжний волейбол'                WHERE slug='volleyball';
+UPDATE disciplines SET name='Великий теніс',          description='Лаун-теніс на відкритих і закритих кортах'    WHERE slug='tennis';
+UPDATE disciplines SET name='Греко-римська боротьба', description='Класична греко-римська боротьба'              WHERE slug='wrestling';
+UPDATE disciplines SET name='Бокс',                   description='Аматорський та професійний бокс'              WHERE slug='boxing';
+UPDATE disciplines SET name='Велоспорт',              description='Шосейний, трековий та гірський велоспорт'     WHERE slug='cycling';
+UPDATE disciplines SET name='Художня гімнастика',     description='Художня та спортивна гімнастика'              WHERE slug='gymnastics';
 
 -- =============================================
 -- ROLES — виправлення описів
@@ -59,7 +59,8 @@ WHERE id = 4;
 -- =============================================
 UPDATE users SET
   first_name = 'Адміністратор',
-  last_name  = 'Системи'
+  last_name  = 'Системи',
+  city       = 'Київ'
 WHERE email = 'admin@sportevent.ua';
 
 -- =============================================

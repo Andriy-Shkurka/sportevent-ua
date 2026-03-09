@@ -168,6 +168,15 @@
           <label class="form-label">Опис</label>
           <textarea class="form-control" id="evDesc" rows="4"></textarea>
         </div>
+        <div class="form-group">
+          <label class="form-label">Афіша (обкладинка заходу)</label>
+          <div id="evCoverPreview" style="display:none;margin-bottom:.5rem;position:relative;display:none">
+            <img id="evCoverImg" style="max-height:140px;border-radius:6px;object-fit:cover;display:block" alt="Афіша">
+            <button type="button" onclick="clearEventCover()" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);border:none;color:#fff;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:.75rem;display:flex;align-items:center;justify-content:center">✕</button>
+          </div>
+          <input class="form-control" type="file" id="evCover" accept="image/*" onchange="previewEventCover(this)">
+          <input type="hidden" id="evCoverCurrent">
+        </div>
       </form>
     </div>
     <div class="modal-footer">
@@ -218,6 +227,26 @@ function debounceSearch() {
 function closeModal() { document.getElementById('eventModal').style.display = 'none'; }
 function closeDeleteModal() { document.getElementById('deleteModal').style.display = 'none'; deleteId = null; }
 
+function previewEventCover(input) {
+  var preview = document.getElementById('evCoverPreview');
+  var img     = document.getElementById('evCoverImg');
+  if (input.files && input.files[0]) {
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      img.src = ev.target.result;
+      preview.style.display = 'block';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function clearEventCover() {
+  document.getElementById('evCover').value        = '';
+  document.getElementById('evCoverCurrent').value = '';
+  document.getElementById('evCoverPreview').style.display = 'none';
+  document.getElementById('evCoverImg').src = '';
+}
+
 async function loadMeta() {
   var user = Auth.getUser();
   if (user) {
@@ -261,9 +290,15 @@ async function loadEvents() {
       '<th>Назва</th><th>Дисципліна</th><th>Дата</th><th>Статус</th><th>Учасників</th><th>Дії</th>' +
     '</tr></thead><tbody>' +
     events.map(function(e) {
+      var coverThumb = e.cover_image
+        ? '<img src="' + esc(e.cover_image) + '" style="width:36px;height:36px;object-fit:cover;border-radius:4px;flex-shrink:0" alt="">'
+        : '<div style="width:36px;height:36px;border-radius:4px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">' + getDisciplineIcon(e.discipline_slug) + '</div>';
       return '<tr>' +
-        '<td><div style="font-weight:600;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(e.title) + '</div></td>' +
-        '<td>' + esc(e.discipline_name||'—') + '</td>' +
+        '<td><div style="display:flex;align-items:center;gap:.6rem">' + coverThumb +
+          '<div style="min-width:0"><div style="font-weight:600;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(e.title) + '</div>' +
+          (e.location_city ? '<div style="font-size:.72rem;color:var(--text-muted)">' + esc(e.location_city) + '</div>' : '') +
+          '</div></div></td>' +
+        '<td style="white-space:nowrap">' + getDisciplineIcon(e.discipline_slug) + ' ' + esc(e.discipline_name||'—') + '</td>' +
         '<td style="white-space:nowrap">' + formatDate(e.start_date) + '</td>' +
         '<td>' + statusBadge(e.status) + '</td>' +
         '<td>' + (e.participants_count||0) + (e.max_participants ? ' / '+e.max_participants : '') + '</td>' +
@@ -296,13 +331,15 @@ function openCreateModal() {
   document.getElementById('modalTitle').textContent = 'Новий захід';
   document.getElementById('eventId').value = '';
   document.getElementById('eventForm').reset();
+  document.getElementById('evCoverPreview').style.display = 'none';
+  document.getElementById('evCoverCurrent').value = '';
   document.getElementById('eventModal').style.display = 'flex';
 }
 
 function openEditModal(event) {
   document.getElementById('modalTitle').textContent = 'Редагувати захід';
   document.getElementById('eventId').value = event.id;
-  document.getElementById('evTitle').value     = event.title || '';
+  document.getElementById('evTitle').value      = event.title || '';
   document.getElementById('evDiscipline').value = event.discipline_id || '';
   document.getElementById('evStartDate').value  = event.start_date ? event.start_date.split('T')[0] : '';
   document.getElementById('evEndDate').value    = event.end_date ? event.end_date.split('T')[0] : '';
@@ -313,6 +350,17 @@ function openEditModal(event) {
   document.getElementById('evStatus').value     = event.status || 'draft';
   document.getElementById('evFeatured').checked = !!event.is_featured;
   document.getElementById('evDesc').value       = event.description || '';
+  document.getElementById('evCover').value      = '';
+  document.getElementById('evCoverCurrent').value = event.cover_image || '';
+  var preview = document.getElementById('evCoverPreview');
+  var img     = document.getElementById('evCoverImg');
+  if (event.cover_image) {
+    img.src = event.cover_image;
+    preview.style.display = 'block';
+  } else {
+    preview.style.display = 'none';
+    img.src = '';
+  }
   document.getElementById('eventModal').style.display = 'flex';
 }
 
@@ -337,32 +385,42 @@ async function confirmDelete() {
 }
 
 async function saveEvent() {
-  var id = document.getElementById('eventId').value;
+  var id  = document.getElementById('eventId').value;
   var btn = document.getElementById('saveEvBtn');
   btn.disabled = true;
 
-  var body = {
-    title:           document.getElementById('evTitle').value.trim(),
-    discipline_id:   parseInt(document.getElementById('evDiscipline').value),
-    start_date:      document.getElementById('evStartDate').value,
-    end_date:        document.getElementById('evEndDate').value || null,
-    location_city:   document.getElementById('evCity').value.trim() || null,
-    location_address:document.getElementById('evAddress').value.trim() || null,
-    max_participants: parseInt(document.getElementById('evMaxPart').value) || null,
-    entry_fee:       parseFloat(document.getElementById('evFee').value) || 0,
-    status:          document.getElementById('evStatus').value,
-    is_featured:     document.getElementById('evFeatured').checked,
-    description:     document.getElementById('evDesc').value.trim() || null
-  };
-
   try {
-    if (id) {
-      await API.put('/admin/events/' + id, body, true);
-      showToast('Захід оновлено!', 'success');
-    } else {
-      await API.post('/admin/events', body, true);
-      showToast('Захід створено!', 'success');
+    var fd = new FormData();
+    fd.append('title',            document.getElementById('evTitle').value.trim());
+    fd.append('discipline_id',    document.getElementById('evDiscipline').value);
+    fd.append('start_date',       document.getElementById('evStartDate').value);
+    fd.append('end_date',         document.getElementById('evEndDate').value || '');
+    fd.append('location_city',    document.getElementById('evCity').value.trim());
+    fd.append('location_address', document.getElementById('evAddress').value.trim());
+    fd.append('max_participants', document.getElementById('evMaxPart').value || '');
+    fd.append('entry_fee',        document.getElementById('evFee').value || '0');
+    fd.append('status',           document.getElementById('evStatus').value);
+    fd.append('is_featured',      document.getElementById('evFeatured').checked ? '1' : '0');
+    fd.append('description',      document.getElementById('evDesc').value.trim());
+
+    var coverFile = document.getElementById('evCover').files[0];
+    if (coverFile) {
+      fd.append('cover_image', coverFile);
+    } else if (!document.getElementById('evCoverCurrent').value) {
+      fd.append('remove_cover', '1');
     }
+
+    var url    = '/api/admin/events' + (id ? '/' + id : '');
+    var method = id ? 'PUT' : 'POST';
+    var res    = await fetch(url, {
+      method,
+      headers: { 'Authorization': 'Bearer ' + Auth.getToken() },
+      body: fd
+    });
+    var data = await res.json();
+    if (!res.ok) throw new Error(data.error || data.detail || 'Помилка');
+
+    showToast(id ? 'Захід оновлено!' : 'Захід створено!', 'success');
     closeModal();
     loadEvents();
   } catch(err) {
