@@ -5,8 +5,26 @@ const Registration = require('../models/Registration');
 const Result = require('../models/Result');
 const { pool } = require('../config/database');
 const emailService = require('../services/emailService');
+const path = require('path');
 const sharp = require('sharp');
-const cloudinary = require('../config/cloudinary');
+
+// Cloudinary is only available when env vars are set
+const cloudinaryConfigured =
+  process.env.CLOUDINARY_CLOUD_NAME &&
+  process.env.CLOUDINARY_API_KEY    &&
+  process.env.CLOUDINARY_API_SECRET;
+const cloudinary = cloudinaryConfigured ? require('../config/cloudinary') : null;
+
+/* Returns the URL/path to store from an uploaded file.
+   Cloudinary: req.file.path is already the full https URL.
+   Disk fallback: req.file.path is absolute — convert to web path. */
+function getFilePath(file) {
+  if (!file) return null;
+  // Cloudinary file has .path starting with 'https://'
+  if (file.path && file.path.startsWith('http')) return file.path;
+  // Disk storage: absolute path → convert to /images/uploads/filename
+  return `/images/uploads/${file.filename}`;
+}
 
 /* Extract Cloudinary public_id from a stored URL or path.
    Returns null for legacy local paths (/images/...). */
@@ -306,7 +324,7 @@ function normalizeEventBody(body) {
 async function createEvent(req, res) {
   try {
     req.body.created_by = req.user.id;
-    if (req.file) req.body.cover_image = req.file.path; // Cloudinary secure URL
+    if (req.file) req.body.cover_image = getFilePath(req.file);
     normalizeEventBody(req.body);
     await resolveLocation(req.body);
     const id = await Event.create(req.body);
@@ -321,7 +339,7 @@ async function createEvent(req, res) {
 async function updateEvent(req, res) {
   try {
     if (req.file) {
-      req.body.cover_image = req.file.path; // Cloudinary secure URL
+      req.body.cover_image = getFilePath(req.file);
     } else if (req.body.remove_cover === '1') {
       req.body.cover_image = null;
     }
@@ -360,7 +378,7 @@ async function getNews(req, res) {
 async function createNews(req, res) {
   try {
     req.body.author_id = req.user.id;
-    if (req.file) req.body.cover_image = req.file.path; // Cloudinary secure URL
+    if (req.file) req.body.cover_image = getFilePath(req.file);
     const id = await News.create(req.body);
     res.status(201).json({ message: 'Новину створено', id });
   } catch (err) {
@@ -370,7 +388,7 @@ async function createNews(req, res) {
 
 async function updateNews(req, res) {
   try {
-    if (req.file) req.body.cover_image = req.file.path; // Cloudinary secure URL
+    if (req.file) req.body.cover_image = getFilePath(req.file);
     await News.update(req.params.id, req.body);
     res.json({ message: 'Новину оновлено' });
   } catch (err) {
@@ -747,11 +765,11 @@ async function uploadMedia(req, res) {
       `INSERT INTO media (uploaded_by, event_id, news_id, file_name, file_path, file_type, mime_type, file_size, title, alt_text)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [req.user.id, event_id || null, news_id || null, req.file.originalname,
-       req.file.path,  // Cloudinary secure URL
+       getFilePath(req.file),
        fileType, req.file.mimetype,
-       req.file.size, title || null, alt_text || null]
+       req.file.size || 0, title || null, alt_text || null]
     );
-    res.status(201).json({ message: 'Файл завантажено', path: req.file.path });
+    res.status(201).json({ message: 'Файл завантажено', path: getFilePath(req.file) });
   } catch (err) {
     res.status(500).json({ error: 'Помилка завантаження файлу' });
   }
@@ -762,10 +780,13 @@ async function deleteMedia(req, res) {
     const [[row]] = await pool.execute('SELECT file_path FROM media WHERE id = ?', [req.params.id]);
     if (!row) return res.status(404).json({ error: 'Файл не знайдено' });
     await pool.execute('DELETE FROM media WHERE id = ?', [req.params.id]);
-    // Delete from Cloudinary (skip legacy local paths)
+    // Delete from Cloudinary or local disk
     const publicId = getCloudinaryPublicId(row.file_path);
-    if (publicId) {
+    if (publicId && cloudinary) {
       try { await cloudinary.uploader.destroy(publicId); } catch (_) {}
+    } else if (row.file_path && row.file_path.startsWith('/images/')) {
+      const localPath = path.join(__dirname, '..', 'public', row.file_path);
+      try { require('fs').unlink(localPath, () => {}); } catch (_) {}
     }
     res.json({ message: 'Медіафайл видалено' });
   } catch (err) {
@@ -788,29 +809,43 @@ async function cropMedia(req, res) {
     const cropW = Math.max(1, Math.round(Number(width)));
     const cropH = Math.max(1, Math.round(Number(height)));
 
-    // Fetch image from Cloudinary URL, crop in-memory, re-upload
-    const response = await fetch(row.file_path);
-    if (!response.ok) throw new Error('Не вдалося завантажити зображення');
-    const arrayBuffer = await response.arrayBuffer();
-    const croppedBuffer = await sharp(Buffer.from(arrayBuffer))
-      .extract({ left: cropX, top: cropY, width: cropW, height: cropH })
-      .jpeg({ quality: 90 })
-      .toBuffer();
-
-    // Re-upload to Cloudinary overwriting the original
     const publicId = getCloudinaryPublicId(row.file_path);
-    const uploadResult = await new Promise((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        { public_id: publicId, overwrite: true, invalidate: true, resource_type: 'image' },
-        (err, result) => err ? reject(err) : resolve(result)
-      );
-      stream.end(croppedBuffer);
-    });
 
-    await pool.execute('UPDATE media SET file_path = ?, file_size = ? WHERE id = ?',
-      [uploadResult.secure_url, croppedBuffer.length, req.params.id]);
+    let newPath;
+    if (publicId && cloudinary) {
+      // Cloudinary: fetch → crop in-memory → re-upload (overwrite)
+      const response = await fetch(row.file_path);
+      if (!response.ok) throw new Error('Не вдалося завантажити зображення');
+      const croppedBuffer = await sharp(Buffer.from(await response.arrayBuffer()))
+        .extract({ left: cropX, top: cropY, width: cropW, height: cropH })
+        .jpeg({ quality: 90 })
+        .toBuffer();
 
-    res.json({ message: 'Зображення обрізано', path: uploadResult.secure_url });
+      const uploadResult = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { public_id: publicId, overwrite: true, invalidate: true, resource_type: 'image' },
+          (err, result) => err ? reject(err) : resolve(result)
+        );
+        stream.end(croppedBuffer);
+      });
+      newPath = uploadResult.secure_url;
+      await pool.execute('UPDATE media SET file_path = ?, file_size = ? WHERE id = ?',
+        [newPath, croppedBuffer.length, req.params.id]);
+    } else {
+      // Local disk: crop in-place with sharp
+      const fs = require('fs');
+      const filePath = path.join(__dirname, '..', 'public', row.file_path);
+      await sharp(filePath)
+        .extract({ left: cropX, top: cropY, width: cropW, height: cropH })
+        .jpeg({ quality: 90 })
+        .toFile(filePath + '.tmp');
+      fs.renameSync(filePath + '.tmp', filePath);
+      const stat = fs.statSync(filePath);
+      newPath = row.file_path;
+      await pool.execute('UPDATE media SET file_size = ? WHERE id = ?', [stat.size, req.params.id]);
+    }
+
+    res.json({ message: 'Зображення обрізано', path: newPath });
   } catch (err) {
     console.error('cropMedia error:', err);
     res.status(500).json({ error: 'Помилка обрізання зображення' });

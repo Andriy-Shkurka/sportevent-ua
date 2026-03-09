@@ -4,6 +4,12 @@ const Result = require('../models/Result');
 const { pool } = require('../config/database');
 const emailService = require('../services/emailService');
 
+function getFilePath(file) {
+  if (!file) return null;
+  if (file.path && file.path.startsWith('http')) return file.path;
+  return `/images/uploads/${file.filename}`;
+}
+
 async function getProfile(req, res) {
   try {
     const user = await User.findById(req.user.id);
@@ -58,7 +64,7 @@ async function updateProfile(req, res) {
         data[key] = req.body[key] === '' ? null : req.body[key];
       }
     }
-    if (req.file) data.avatar = req.file.path; // Cloudinary secure URL
+    if (req.file) data.avatar = getFilePath(req.file);
     await User.update(req.user.id, data);
     res.json({ message: 'Профіль оновлено' });
   } catch (err) {
