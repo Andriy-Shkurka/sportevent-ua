@@ -515,6 +515,7 @@
     flex: 1;
     display: flex;
     flex-direction: column;
+    background: var(--bg-card);
   }
 
   .event-card-meta {
